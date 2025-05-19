@@ -1,5 +1,15 @@
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import "react-native-reanimated";
 
 export default function RootLayout() {
-  return <Stack />;
+  return (
+    <>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="NotFoundScreen" />
+      </Stack>
+      <StatusBar style="auto" />
+    </>
+  );
 }
