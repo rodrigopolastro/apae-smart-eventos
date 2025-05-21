@@ -18,7 +18,7 @@ export default function HomeScreen() {
         <ThemedText style={styles.acessButtons}>Acessos</ThemedText>
         <ThemedView>
           <Button title='Realizar Login' onPress={() => router.push('/login')} />
-          <Button title='Criar Conta' onPress={() => router.push('/login')} />
+          <Button title='Criar Conta' onPress={() => router.push('/signup')} />
         </ThemedView>
       </ThemedView>
     </ThemedView>

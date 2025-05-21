@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
+  Image,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
@@ -73,6 +74,10 @@ export default function Login() {
       style={styles.container}
     >
       <ThemedView style={styles.innerContainer}>
+        <Image
+                  source={require('../assets/images/logoapae.png')} // Verifique se o caminho está correto
+                  style={styles.logo}
+                />
         <StatusBar hidden={true} />
         <ThemedText style={styles.title}>SmartEventos</ThemedText>
         <ThemedText style={styles.sectionTitle}>Login</ThemedText>
@@ -121,11 +126,19 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   innerContainer: {
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+  },
+  logo: { // Novo estilo para a imagem
+    width: 150, // Ajuste a largura conforme necessário
+    height: 150, // Ajuste a altura conforme necessário
+    alignSelf: 'center', // Centraliza a imagem horizontalmente
+    marginBottom: 40, // Espaçamento abaixo da imagem
+    resizeMode: 'contain', // Garante que a imagem se ajuste sem cortar
   },
   title: {
     fontSize: 24,

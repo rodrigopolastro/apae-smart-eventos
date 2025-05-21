@@ -3,6 +3,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Image,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
@@ -75,6 +76,10 @@ export default function SignUp() {
       style={styles.container}
     >
       <ThemedView style={styles.innerContainer}>
+        <Image
+                  source={require('../assets/images/logoapae.png')} // Verifique se o caminho está correto
+                  style={styles.logo}
+                />
         <ThemedText style={styles.title}>SmartEventos</ThemedText>
 
         <ThemedText style={styles.sectionTitle}>Cadastre-se</ThemedText>
@@ -126,21 +131,31 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
+  logo: { // Novo estilo para a imagem
+    width: 150, // Ajuste a largura conforme necessário
+    height: 150, // Ajuste a altura conforme necessário
+    alignSelf: 'center', // Centraliza a imagem horizontalmente
+    marginBottom: 40, // Espaçamento abaixo da imagem
+    resizeMode: 'contain', // Garante que a imagem se ajuste sem cortar
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 40,
+    color: '#333',
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 20,
+    color: '#333',
   },
   label: {
     fontSize: 16,
     marginBottom: 8,
     fontWeight: '500',
+    color: '#333',
   },
   input: {
     height: 50,
