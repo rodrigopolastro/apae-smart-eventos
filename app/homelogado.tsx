@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react'; // Importa useState também
 
 const { width } = Dimensions.get('window');
 
@@ -14,37 +14,37 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const cardWidth = width * 0.7; // Largura do card
   const cardMarginRight = 15; // Margem direita do card
-  const [currentScrollX, setCurrentScrollX] = useState(0);
+  const [currentScrollX, setCurrentScrollX] = useState(0); // Novo estado para a posição de scroll atual
 
   // Dados mockados para os eventos do carrossel
   const events = [
     {
       id: '1',
-      image: require('../../assets/images/festajunina.jpg'), // Caminho corrigido
+      image: require('../assets/images/festajunina.jpg'),
       text: 'Expo Ecomm Circuito 2025',
       details: 'Goiânia 2025 | Terça-feira, 14 Out. • 13h',
     },
     {
       id: '2',
-      image: require('../../assets/images/festajunina.jpg'), // Caminho corrigido
+      image: require('../assets/images/festajunina.jpg'),
       text: 'Ceará Trap Music Festival',
       details: 'Fortaleza - CE | Sábado, 28 Set. • 19h',
     },
     {
       id: '3',
-      image: require('../../assets/images/festajunina.jpg'), // Caminho corrigido
+      image: require('../assets/images/festajunina.jpg'),
       text: 'Festa Junina',
       details: 'APAE 2025 | Terça-feira, 14 Out. • 13h',
     },
     {
       id: '4',
-      image: require('../../assets/images/festajunina.jpg'), // Certifique-se de ter essa imagem
+      image: require('../assets/images/festajunina.jpg'),
       text: 'Mega Encontro Tech',
       details: 'São Paulo - SP | Sexta-feira, 05 Dez. • 09h',
     },
     {
       id: '5',
-      image: require('../../assets/images/festajunina.jpg'), // Certifique-se de ter essa imagem
+      image: require('../assets/images/festajunina.jpg'),
       text: 'Conferência de IA',
       details: 'Rio de Janeiro - RJ | Quarta-feira, 20 Nov. • 10h',
     },
@@ -52,12 +52,6 @@ export default function HomeScreen() {
 
   const handleLoginPress = () => {
     router.push('/login');
-  };
-
-  // Função para navegar para a tela de descrição do evento
-  const handleEventPress = (eventId: string) => {
-    // Agora redireciona para '/event-description'
-    router.push({ pathname: '/eventdescription', params: { eventId: eventId } });
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -73,8 +67,7 @@ export default function HomeScreen() {
 
   const scrollRight = () => {
     if (scrollViewRef.current) {
-      const totalContentWidth = events.length * (cardWidth + cardMarginRight);
-      const maxScrollX = totalContentWidth - width + cardMarginRight;
+      const maxScrollX = (events.length * (cardWidth + cardMarginRight)) - width + cardMarginRight;
       const newX = Math.min(maxScrollX, currentScrollX + (cardWidth + cardMarginRight));
       scrollViewRef.current.scrollTo({ x: newX, animated: true });
     }
@@ -84,7 +77,7 @@ export default function HomeScreen() {
     <ThemedView style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Bar / Header */}
-        <LinearGradient
+    <LinearGradient
           colors={['#007AFF', '#5DADE2']} // Cores de gradiente azul
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
@@ -92,7 +85,7 @@ export default function HomeScreen() {
         >
           <ThemedView style={styles.headerContent}>
             <Image
-              source={require('../../assets/images/logoapae.png')}
+              source={require('../assets/images/logoapae.png')}
               style={styles.headerLogo}
             />
             <ThemedText style={styles.headerTitle}>APAE</ThemedText>
@@ -119,11 +112,11 @@ export default function HomeScreen() {
               contentContainerStyle={styles.eventsCarousel}
               snapToInterval={cardWidth + cardMarginRight}
               decelerationRate="fast"
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
+              onScroll={handleScroll} // Adiciona o handler de scroll
+              scrollEventThrottle={16} // Otimiza a frequência do evento de scroll
             >
               {events.map(event => (
-                <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => handleEventPress(event.id)}>
+                <TouchableOpacity key={event.id} style={styles.eventCard}>
                   <Image source={event.image} style={styles.eventImage} />
                   <ThemedText style={styles.eventCardText}>{event.text}</ThemedText>
                   <ThemedText style={styles.eventCardDetails}>{event.details}</ThemedText>
@@ -138,7 +131,6 @@ export default function HomeScreen() {
 
           {/* Espaço para mais conteúdo abaixo do carrossel se necessário */}
         </ScrollView>
-
       </SafeAreaView>
     </ThemedView>
   );
@@ -188,7 +180,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF', // Cor do texto do botão de login (azul)
+    color: '#4B0082',
   },
   scrollContent: {
     padding: 20,
