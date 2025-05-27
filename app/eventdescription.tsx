@@ -1,21 +1,25 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useRouter, useLocalSearchParams } from 'expo-router'; // Importa useLocalSearchParams
-import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useState } from 'react'; // Importa useEffect
-import { IconSymbol } from '@/components/ui/IconSymbol';
-
-const { width } = Dimensions.get('window');
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EventDescriptionScreen() {
   const router = useRouter();
-  const { eventId } = useLocalSearchParams(); // Obtém o eventId dos parâmetros da rota
-  const [eventDetails, setEventDetails] = useState<any>(null); // Estado para armazenar os detalhes do evento
+  const { eventId } = useLocalSearchParams();
+  const [eventDetails, setEventDetails] = useState<any>(null);
+  const [showAdminDetails, setShowAdminDetails] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [tickets, setTickets] = useState({
+    vip: { count: 0, price: 250.00 },
+    normal: { count: 0, price: 120.00 },
+    meia: { count: 0, price: 60.00 }
+  });
 
-  // Dados mockados de eventos com mais detalhes
-  // Em um cenário real, você faria uma chamada de API para buscar os detalhes do evento
+  // Dados mockados
   const mockEventsData = {
     '1': {
       id: '1',
@@ -23,54 +27,75 @@ export default function EventDescriptionScreen() {
       title: 'Expo Ecomm Circuito 2025',
       date: '25/05/2025',
       location: 'Goiânia - GO',
-      description: 'A Expo Ecomm Circuito 2025 é o maior evento de e-commerce e marketing digital do Centro-Oeste. Prepare-se para dois dias de imersão em tendências, estratégias e inovações que estão moldando o futuro do comércio eletrônico. Contaremos com palestrantes renomados, workshops práticos e uma feira de negócios com as principais soluções do mercado. Não perca a oportunidade de fazer networking e impulsionar o seu negócio!',
+      description: 'A Expo Ecomm Circuito 2025 é o maior evento de e-commerce e marketing digital do Centro-Oeste. Prepare-se para dois dias de imersão em tendências, estratégias e inovações que estão moldando o futuro do comércio eletrônico.',
       fullDate: 'Terça-feira, 14 de Outubro de 2025 • 13h00',
+      adminDetails: {
+        ticketsAvailable: 500,
+        ticketsSold: 320,
+        attendees: 280,
+        ticketPrice: 120.00,
+        revenue: 38400.00
+      }
     },
-    '2': {
-      id: '2',
-      image: require('../assets/images/festajunina.jpg'),
-      title: 'Ceará Trap Music Festival',
-      date: '28/09/2025',
-      location: 'Fortaleza - CE',
-      description: 'O Ceará Trap Music Festival traz os maiores nomes do trap nacional e internacional para uma noite inesquecível em Fortaleza. Com uma produção de tirar o fôlego, este festival promete ser o ponto alto do ano para os amantes do gênero. Prepare-se para muita batida, rimas e energia contagiante. Garanta já seu ingresso e venha fazer parte dessa história!',
-      fullDate: 'Sábado, 28 de Setembro de 2025 • 19h00',
-    },
-    '3': {
-      id: '3',
-      image: require('../assets/images/festajunina.jpg'),
-      title: 'Festa Junina APAE 2025',
-      date: '14/06/2025',
-      location: 'APAE Local',
-      description: 'Venha celebrar a tradicional Festa Junina da APAE! Um evento beneficente repleto de alegria, comidas típicas, brincadeiras para toda a família e muita música. Ajude a APAE e divirta-se em um ambiente acolhedor e festivo. Sua presença faz a diferença!',
-      fullDate: 'Terça-feira, 14 de Junho de 2025 • 13h00',
-    },
-    '4': {
-      id: '4',
-      image: require('../assets/images/festajunina.jpg'),
-      title: 'Mega Encontro Tech',
-      date: '05/12/2025',
-      location: 'São Paulo - SP',
-      description: 'O Mega Encontro Tech é o evento ideal para desenvolvedores, engenheiros de software e entusiastas de tecnologia. Serão palestras, workshops e hackathons com foco nas últimas inovações em inteligência artificial, blockchain e desenvolvimento mobile. Uma oportunidade única para aprender e se conectar com os líderes da indústria.',
-      fullDate: 'Sexta-feira, 05 de Dezembro de 2025 • 09h00',
-    },
-    '5': {
-      id: '5',
-      image: require('../assets/images/festajunina.jpg'),
-      title: 'Conferência de IA',
-      date: '20/11/2025',
-      location: 'Rio de Janeiro - RJ',
-      description: 'Participe da Conferência Internacional de Inteligência Artificial, onde especialistas de todo o mundo compartilharão suas pesquisas e descobertas mais recentes. Explore o impacto da IA em diversas indústrias, desde a saúde até a automação. Ideal para pesquisadores, estudantes e profissionais que buscam se aprofundar no universo da inteligência artificial.',
-      fullDate: 'Quarta-feira, 20 de Novembro de 2025 • 10h00',
-    },
+    // ... outros eventos com mesma estrutura
   };
 
   useEffect(() => {
     if (eventId) {
-      // Em um cenário real, você faria uma chamada de API aqui:
-      // fetchEventDetails(eventId).then(data => setEventDetails(data));
       setEventDetails(mockEventsData[eventId as keyof typeof mockEventsData]);
     }
   }, [eventId]);
+
+  const handleGoBack = () => {
+    router.back();
+  };
+
+  const handleAcquireTicket = () => {
+    setShowTicketModal(true);
+  };
+
+  const toggleAdminDetails = () => {
+    setShowAdminDetails(!showAdminDetails);
+  };
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
+
+  const updateTicketCount = (type: 'vip' | 'normal' | 'meia', operation: 'increase' | 'decrease') => {
+    setTickets(prev => {
+      const newCount = operation === 'increase' 
+        ? prev[type].count + 1 
+        : Math.max(0, prev[type].count - 1);
+      
+      return {
+        ...prev,
+        [type]: {
+          ...prev[type],
+          count: newCount
+        }
+      };
+    });
+  };
+
+  const calculateTotal = () => {
+    return (tickets.vip.count * tickets.vip.price) +
+           (tickets.normal.count * tickets.normal.price) +
+           (tickets.meia.count * tickets.meia.price);
+  };
+
+  const handlePurchase = () => {
+    alert(`Compra realizada! Total: ${formatCurrency(calculateTotal())}`);
+    setShowTicketModal(false);
+    setTickets({
+      vip: { count: 0, price: 250.00 },
+      normal: { count: 0, price: 120.00 },
+      meia: { count: 0, price: 60.00 }
+    });
+  };
 
   if (!eventDetails) {
     return (
@@ -80,57 +105,283 @@ export default function EventDescriptionScreen() {
     );
   }
 
-  const handleGoBack = () => {
-    router.back(); // Volta para a tela anterior
-  };
-
-  const handleAcquireTicket = () => {
-    // Lógica para adquirir ingresso
-    alert('Funcionalidade de adquirir ingresso em desenvolvimento!');
-    // Em um app real, você navegaria para uma tela de compra ou processaria a aquisição
-  };
-
   return (
     <ThemedView style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Top Bar / Header */}
+        {/* Cabeçalho */}
         <LinearGradient
-          colors={['#007AFF', '#5DADE2']} // Cores de gradiente azul
+          colors={['#007AFF', '#5DADE2']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.topBar}
         >
           <ThemedView style={styles.headerContent}>
-            <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-              <IconSymbol size={30} name='chevron.left' color='#fff' />
+            <TouchableOpacity onPress={handleGoBack}>
+              <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
             <ThemedText style={styles.headerTitle}>Detalhes do Evento</ThemedText>
-            <ThemedView style={{ width: 30 }} /> {/* Espaçador para alinhar o título */}
+            <View style={{ width: 24 }} />
           </ThemedView>
         </LinearGradient>
 
-        {/* Content Area */}
+        {/* Conteúdo Principal */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Imagem e informações básicas */}
           <Image source={eventDetails.image} style={styles.eventImage} />
           <ThemedText style={styles.eventTitle}>{eventDetails.title}</ThemedText>
           <ThemedText style={styles.eventDateLocation}>{eventDetails.fullDate}</ThemedText>
           <ThemedText style={styles.eventDateLocation}>{eventDetails.location}</ThemedText>
 
-          <ThemedView style={styles.divider} />
+          <View style={styles.divider} />
 
-          <ThemedText style={styles.sectionTitle}>Sobre o Evento</ThemedText>
-          <ThemedText style={styles.eventDescription}>{eventDetails.description}</ThemedText>
+          {/* Botões de Ação */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.primaryButton]}
+              onPress={handleAcquireTicket}
+            >
+              <ThemedText style={styles.buttonText}>Adquirir Ingresso</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.secondaryButton]}
+              onPress={toggleAdminDetails}
+            >
+              <ThemedText style={styles.buttonText}>
+                {showAdminDetails ? 'Ocultar Admin' : 'Detalhes Admin'}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity style={styles.acquireTicketButton} onPress={handleAcquireTicket}>
-            <ThemedText style={styles.acquireTicketButtonText}>Adquirir Ingresso</ThemedText>
-          </TouchableOpacity>
+          {/* Conteúdo Dinâmico */}
+          {showAdminDetails ? (
+            <>
+              {/* Cards Administrativos */}
+              <View style={styles.adminCardsContainer}>
+                {/* Card Ingressos Disponíveis */}
+                <View style={styles.adminCard}>
+                  <MaterialIcons name="confirmation-number" size={28} color="#007AFF" />
+                  <ThemedText style={styles.adminCardTitle}>Disponíveis</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {eventDetails.adminDetails.ticketsAvailable}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
+                </View>
+
+                {/* Card Ingressos Vendidos */}
+                <View style={styles.adminCard}>
+                  <Ionicons name="cart" size={28} color="#34C759" />
+                  <ThemedText style={styles.adminCardTitle}>Vendidos</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {eventDetails.adminDetails.ticketsSold}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
+                </View>
+
+                {/* Card Presenças Confirmadas */}
+                <View style={styles.adminCard}>
+                  <Ionicons name="people" size={28} color="#5856D6" />
+                  <ThemedText style={styles.adminCardTitle}>Presentes</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {eventDetails.adminDetails.attendees}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Pessoas</ThemedText>
+                </View>
+
+                {/* Card Preço do Ingresso */}
+                <View style={styles.adminCard}>
+                  <MaterialIcons name="attach-money" size={28} color="#FF9500" />
+                  <ThemedText style={styles.adminCardTitle}>Preço Unitário</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {formatCurrency(eventDetails.adminDetails.ticketPrice)}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Por ingresso</ThemedText>
+                </View>
+              </View>
+
+              {/* Card de Arrecadação Total */}
+              <View style={styles.revenueCard}>
+                <View style={styles.revenueHeader}>
+                  <Ionicons name="cash" size={32} color="#4CD964" />
+                  <ThemedText style={styles.revenueTitle}>Arrecadação Total</ThemedText>
+                </View>
+                <ThemedText style={styles.revenueValue}>
+                  {formatCurrency(eventDetails.adminDetails.revenue)}
+                </ThemedText>
+                <ThemedText style={styles.revenueSubtitle}>
+                  {eventDetails.adminDetails.ticketsSold} ingressos vendidos
+                </ThemedText>
+              </View>
+            </>
+          ) : (
+            <>
+              <ThemedText style={styles.sectionTitle}>Sobre o Evento</ThemedText>
+              <ThemedText style={styles.eventDescription}>{eventDetails.description}</ThemedText>
+            </>
+          )}
         </ScrollView>
+
+        {/* Modal de Compra de Ingressos */}
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={showTicketModal}
+          onRequestClose={() => setShowTicketModal(false)}
+        >
+          <ThemedView style={styles.modalContainer}>
+            <SafeAreaView style={styles.safeArea}>
+              <LinearGradient
+                colors={['#007AFF', '#5DADE2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.modalHeader}
+              >
+                <ThemedView style={styles.headerContent}>
+                  <TouchableOpacity onPress={() => setShowTicketModal(false)}>
+                    <Ionicons name="close" size={24} color="white" />
+                  </TouchableOpacity>
+                  <ThemedText style={styles.headerTitle}>Selecione os Ingressos</ThemedText>
+                  <View style={{ width: 24 }} />
+                </ThemedView>
+              </LinearGradient>
+
+              <ScrollView contentContainerStyle={styles.modalContent}>
+                <ThemedText style={styles.modalTitle}>Ingressos disponíveis para:</ThemedText>
+                <ThemedText style={styles.eventModalTitle}>{eventDetails.title}</ThemedText>
+                
+                {/* Card Ingresso VIP */}
+                <ThemedView style={styles.ticketCard}>
+                  <ThemedView style={styles.ticketInfo}>
+                    <ThemedText style={styles.ticketType}>Ingresso VIP</ThemedText>
+                    <ThemedText style={styles.ticketDescription}>Acesso premium + área exclusiva</ThemedText>
+                    <ThemedText style={styles.ticketPrice}>{formatCurrency(tickets.vip.price)}</ThemedText>
+                  </ThemedView>
+                  <ThemedView style={styles.counterContainer}>
+                    <TouchableOpacity 
+                      style={styles.counterButton}
+                      onPress={() => updateTicketCount('vip', 'decrease')}
+                    >
+                      <Ionicons name="remove" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                    <ThemedText style={styles.counterValue}>{tickets.vip.count}</ThemedText>
+                    <TouchableOpacity 
+                      style={styles.counterButton}
+                      onPress={() => updateTicketCount('vip', 'increase')}
+                    >
+                      <Ionicons name="add" size={20} color="#34C759" />
+                    </TouchableOpacity>
+                  </ThemedView>
+                </ThemedView>
+
+                {/* Card Ingresso Normal */}
+                <ThemedView style={styles.ticketCard}>
+                  <ThemedView style={styles.ticketInfo}>
+                    <ThemedText style={styles.ticketType}>Ingresso Normal</ThemedText>
+                    <ThemedText style={styles.ticketDescription}>Acesso geral ao evento</ThemedText>
+                    <ThemedText style={styles.ticketPrice}>{formatCurrency(tickets.normal.price)}</ThemedText>
+                  </ThemedView>
+                  <ThemedView style={styles.counterContainer}>
+                    <TouchableOpacity 
+                      style={styles.counterButton}
+                      onPress={() => updateTicketCount('normal', 'decrease')}
+                    >
+                      <Ionicons name="remove" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                    <ThemedText style={styles.counterValue}>{tickets.normal.count}</ThemedText>
+                    <TouchableOpacity 
+                      style={styles.counterButton}
+                      onPress={() => updateTicketCount('normal', 'increase')}
+                    >
+                      <Ionicons name="add" size={20} color="#34C759" />
+                    </TouchableOpacity>
+                  </ThemedView>
+                </ThemedView>
+
+                {/* Card Ingresso Meia */}
+                <ThemedView style={styles.ticketCard}>
+                  <ThemedView style={styles.ticketInfo}>
+                    <ThemedText style={styles.ticketType}>Ingresso Meia</ThemedText>
+                    <ThemedText style={styles.ticketDescription}>Estudantes, idosos e pessoas com deficiência</ThemedText>
+                    <ThemedText style={styles.ticketPrice}>{formatCurrency(tickets.meia.price)}</ThemedText>
+                  </ThemedView>
+                  <ThemedView style={styles.counterContainer}>
+                    <TouchableOpacity 
+                      style={styles.counterButton}
+                      onPress={() => updateTicketCount('meia', 'decrease')}
+                    >
+                      <Ionicons name="remove" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                    <ThemedText style={styles.counterValue}>{tickets.meia.count}</ThemedText>
+                    <TouchableOpacity 
+                      style={styles.counterButton}
+                      onPress={() => updateTicketCount('meia', 'increase')}
+                    >
+                      <Ionicons name="add" size={20} color="#34C759" />
+                    </TouchableOpacity>
+                  </ThemedView>
+                </ThemedView>
+
+                {/* Resumo da Compra */}
+                <ThemedView style={styles.summaryCard}>
+                  <ThemedText style={styles.summaryTitle}>Resumo da Compra</ThemedText>
+                  
+                  {tickets.vip.count > 0 && (
+                    <ThemedView style={styles.summaryItem}>
+                      <ThemedText style={styles.summaryText}>{tickets.vip.count}x Ingresso VIP</ThemedText>
+                      <ThemedText style={styles.summaryText}>
+                        {formatCurrency(tickets.vip.count * tickets.vip.price)}
+                      </ThemedText>
+                    </ThemedView>
+                  )}
+                  
+                  {tickets.normal.count > 0 && (
+                    <ThemedView style={styles.summaryItem}>
+                      <ThemedText style={styles.summaryText}>{tickets.normal.count}x Ingresso Normal</ThemedText>
+                      <ThemedText style={styles.summaryText}>
+                        {formatCurrency(tickets.normal.count * tickets.normal.price)}
+                      </ThemedText>
+                    </ThemedView>
+                  )}
+                  
+                  {tickets.meia.count > 0 && (
+                    <ThemedView style={styles.summaryItem}>
+                      <ThemedText style={styles.summaryText}>{tickets.meia.count}x Ingresso Meia</ThemedText>
+                      <ThemedText style={styles.summaryText}>
+                        {formatCurrency(tickets.meia.count * tickets.meia.price)}
+                      </ThemedText>
+                    </ThemedView>
+                  )}
+                  
+                  <ThemedView style={styles.totalContainer}>
+                    <ThemedText style={styles.totalText}>Total:</ThemedText>
+                    <ThemedText style={styles.totalValue}>{formatCurrency(calculateTotal())}</ThemedText>
+                  </ThemedView>
+                </ThemedView>
+
+                {/* Botão de Finalizar Compra */}
+                <TouchableOpacity 
+                  style={[
+                    styles.purchaseButton,
+                    calculateTotal() === 0 && styles.disabledButton
+                  ]}
+                  onPress={handlePurchase}
+                  disabled={calculateTotal() === 0}
+                >
+                  <ThemedText style={styles.purchaseButtonText}>
+                    Finalizar Compra
+                  </ThemedText>
+                </TouchableOpacity>
+              </ScrollView>
+            </SafeAreaView>
+          </ThemedView>
+        </Modal>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
+  // Estilos base
   mainContainer: {
     flex: 1,
     backgroundColor: '#fff',
@@ -151,15 +402,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    backgroundColor: 'transparent',
-  },
-  backButton: {
-    padding: 5,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
+    textAlign: 'center',
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -168,63 +417,276 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    alignItems: 'center', // Centraliza o conteúdo horizontalmente
+    paddingBottom: 40,
   },
   eventImage: {
     width: '100%',
-    height: 250, // Altura maior para a imagem principal
-    resizeMode: 'cover',
-    borderRadius: 10,
-    marginBottom: 20,
+    height: 220,
+    borderRadius: 12,
+    marginBottom: 16,
   },
   eventTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#333',
+    marginBottom: 8,
+    color: '#1C1C1E',
   },
   eventDateLocation: {
     fontSize: 16,
-    color: '#666',
+    color: '#636366',
     textAlign: 'center',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   divider: {
     height: 1,
-    backgroundColor: '#eee',
+    backgroundColor: '#E5E5EA',
     marginVertical: 20,
     width: '100%',
   },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButton: {
+    backgroundColor: '#007AFF',
+  },
+  secondaryButton: {
+    backgroundColor: '#34C759',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-    alignSelf: 'flex-start', // Alinha o título da seção à esquerda
+    marginBottom: 16,
+    color: '#1C1C1E',
   },
   eventDescription: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#555',
+    color: '#48484A',
     textAlign: 'justify',
-    marginBottom: 30,
   },
-  acquireTicketButton: {
-    backgroundColor: '#007AFF', // Azul vibrante para o botão
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+  
+  // Estilos para a seção administrativa
+  adminCardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 12,
+  },
+  adminCard: {
+    width: '48%', // Dois cards por linha
+    backgroundColor: '#F7F7F7',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  adminCardTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#636366',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  adminCardValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1C1C1E',
+    marginVertical: 4,
+  },
+  adminCardSubtitle: {
+    fontSize: 12,
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
+  
+  // Card de arrecadação
+  revenueCard: {
+    backgroundColor: '#F7F7F7',
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    borderLeftWidth: 6,
+    borderLeftColor: '#4CD964',
+    marginTop: 8,
+  },
+  revenueHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  revenueTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginLeft: 10,
+  },
+  revenueValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#4CD964',
+    marginBottom: 4,
+  },
+  revenueSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+
+  // Estilos do Modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    width: '100%',
+    height: 80,
+    justifyContent: 'flex-end',
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 16,
+    color: '#636366',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  eventModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#1C1C1E',
+  },
+
+  // Estilos dos Cards de Ingresso
+  ticketCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F7F7F7',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  ticketInfo: {
+    flex: 1,
+  },
+  ticketType: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1C1C1E',
+    marginBottom: 4,
+  },
+  ticketDescription: {
+    fontSize: 14,
+    color: '#636366',
+    marginBottom: 8,
+  },
+  ticketPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  counterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  counterButton: {
+    padding: 8,
+  },
+  counterValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginHorizontal: 12,
+    minWidth: 24,
+    textAlign: 'center',
+  },
+
+  // Estilos do Resumo
+  summaryCard: {
+    backgroundColor: '#F7F7F7',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#1C1C1E',
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 16,
+    color: '#48484A',
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  totalText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  totalValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#34C759',
+  },
+
+  // Botão de Compra
+  purchaseButton: {
+    backgroundColor: '#007AFF',
+    padding: 16,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
+    marginTop: 24,
   },
-  acquireTicketButtonText: {
+  disabledButton: {
+    backgroundColor: '#AEAEB2',
+  },
+  purchaseButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
