@@ -11,11 +11,10 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
-  // Ajuste a largura do card para permitir a visualização parcial dos cards adjacentes
-  const cardWidth = width * 0.85; // 85% da largura da tela para o card principal
-  const cardSpacing = 10; // Espaçamento entre os cards
-  const [activeIndex, setActiveIndex] = useState(0); // Estado para o índice do card ativo
-  const [currentScrollX, setCurrentScrollX] = useState(0); // Movido para dentro do componente
+  const cardWidth = width * 0.85;
+  const cardSpacing = 10;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [currentScrollX, setCurrentScrollX] = useState(0);
 
   // Dados mockados para os eventos do carrossel com novos detalhes
   const events = [
@@ -57,7 +56,7 @@ export default function HomeScreen() {
     },
   ];
 
-  const handleLoginPress = () => {
+   const handleLoginPress = () => {
     router.push('/login');
   };
 
@@ -67,14 +66,11 @@ export default function HomeScreen() {
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    // Calcula o índice do card ativo com base na posição do scroll
     const newIndex = Math.round(contentOffsetX / (cardWidth + cardSpacing));
     setActiveIndex(newIndex);
-    setCurrentScrollX(contentOffsetX); // Atualiza currentScrollX aqui
+    setCurrentScrollX(contentOffsetX);
   };
 
-  // Funções scrollLeft e scrollRight não são mais necessárias com a remoção das setas
-  // Mas mantidas caso queira reintroduzir a navegação por botão no futuro.
   const scrollLeft = () => {
     if (scrollViewRef.current) {
       const newX = Math.max(0, currentScrollX - (cardWidth + cardSpacing));
@@ -93,8 +89,9 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Corpo principal com azul mais claro */}
+        {/* Corpo principal com azul mais claro - Ocupa toda a tela */}
         <ThemedView style={styles.bodyContainer}>
+          {/* O conteúdo real do bodyContainer será empurrado para baixo pelo paddingTop */}
           {/* Texto "Eventos APAE" com fundo amarelo */}
           <ThemedView style={styles.eventsApaeContainer}>
             <ThemedText style={styles.eventsApaeText}>Eventos APAE</ThemedText>
@@ -102,15 +99,14 @@ export default function HomeScreen() {
 
           {/* Carrossel de Eventos */}
           <ThemedView style={styles.carouselContainer}>
-            {/* Removido TouchableOpacity para as setas */}
             <ScrollView
               ref={scrollViewRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.eventsCarousel}
-              snapToInterval={cardWidth + cardSpacing} // Ajustado para o novo espaçamento
+              snapToInterval={cardWidth + cardSpacing}
               decelerationRate="fast"
-              onScroll={handleScroll} // Atualiza o índice do card ativo
+              onScroll={handleScroll}
               scrollEventThrottle={16}
             >
               {events.map((event, index) => (
@@ -122,7 +118,6 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            {/* Removido TouchableOpacity para as setas */}
           </ThemedView>
 
           {/* Pontos de Paginação */}
@@ -139,7 +134,7 @@ export default function HomeScreen() {
           </ThemedView>
         </ThemedView>
 
-        {/* Top Bar / Header */}
+        {/* Top Bar / Header - Posicionada absolutamente acima do bodyContainer */}
         <LinearGradient
           colors={['#003366', '#004080']} // Azul mais escuro
           start={{ x: 0, y: 0 }}
@@ -147,13 +142,13 @@ export default function HomeScreen() {
           style={styles.topBar}
         >
           <TouchableOpacity onPress={handleLoginPress} style={styles.loginButton}>
-            <ThemedText style={styles.loginButtonText}>Login</ThemedText>
+            <ThemedText style={styles.loginButtonText}>L</ThemedText>
           </TouchableOpacity>
         </LinearGradient>
 
-        {/* Logo central - Agora fora do bodyContainer para zIndex funcionar */}
+        {/* Logo central - Posicionada absolutamente acima de tudo */}
         <Image
-          source={require('../../assets/images/SmartEventos2.png')} // Usando SmartEventos2.png
+          source={require('../../assets/images/SmartEventos2.png')}
           style={styles.centerLogo}
         />
       </SafeAreaView>
@@ -171,24 +166,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   topBar: {
-    width: '100%',
-    height: 150,
+    width: -40,
+    height: 150, // Altura da topBar
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     paddingTop: 10,
     paddingRight: 10,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    position: 'absolute',
-    zIndex: 2,
-    top: 0,
+    // Removido borderBottomLeftRadius e borderBottomRightRadius para ser uma barra reta
+    position: 'absolute', // Permite posicionamento sobre outros elementos
+  zIndex: 2, // Fica acima do bodyContainer
+    top: 50, // 20px do topo para mostrar o bodyContainer
+    left: 20, // 20px da esquerda
+    right: 20, // 20px da direita
+    borderRadius:20,
   },
   loginButton: {
     backgroundColor: '#FFD700',
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 15,
-    borderRadius: 20,
+    borderRadius: 10,
     marginTop: 10,
+    marginRight:10,
   },
   loginButtonText: {
     fontSize: 16,
@@ -196,56 +194,67 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   bodyContainer: {
-    flex: 1,
-    backgroundColor: '#ADD8E6',
+    flex: 1, // Ocupa todo o espaço disponível
+    backgroundColor: '#ADD8E6', // Azul mais claro
     alignItems: 'center',
-    paddingTop: 0,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: 100,
-    zIndex: 1,
+    // Empurra o conteúdo para baixo para dar espaço à topBar e à logo
+    paddingTop: 225, // 150 (altura topBar) + 75 (metade da logo) = 225
+    borderTopLeftRadius: 30, // Cantos arredondados visíveis
+    borderTopRightRadius: 30, // Cantos arredondados visíveis
+    marginTop: 0, // Começa do topo da SafeAreaView
+    zIndex: 1, // Fica abaixo da topBar e da logo
+    position: 'absolute', // Permite sobreposição com topBar
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   centerLogo: {
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
     resizeMode: 'contain',
     position: 'absolute',
-    top: 25,
-    left: (width / 2) - 75,
-    zIndex: 3,
+    // Posiciona a logo no centro da borda entre topBar e bodyContainer
+    top: 120, // 150 (altura topBar) - 75 (metade da logo) = 75
+    left: (width / 2) -60, // Centraliza horizontalmente
+    zIndex: 3, // Acima de topBar e bodyContainer
+    borderRadius:30,
+    
   },
   eventsApaeContainer: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#ADD8E6',
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 10,
     marginBottom: 20,
-    marginTop: 75,
+    marginTop: 50, // Espaçamento abaixo da área da logo
   },
   eventsApaeText: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
+
   },
   carouselContainer: {
-    // Removido flexDirection, alignItems, justifyContent pois as setas foram removidas
     marginBottom: 20,
-    width: '100%',
+    width: '90%',
+    padding:15,
+    borderRadius:20,
+    backgroundColor: '#003366'
   },
-  // Removido arrowButton e arrowText styles
   carouselScrollView: {
     flex: 1,
-    // Adicionado paddingHorizontal para mostrar os cards adjacentes
     paddingHorizontal: (width - (width * 0.85)) / 2,
+    
   },
   eventsCarousel: {
     paddingBottom: 20,
-    // Removido paddingRight
+    borderRadius:20,
   },
   eventCard: {
-    width: width * 0.85, // Largura do card principal
+    width: width * 0.85,
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#ddd',
@@ -254,27 +263,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
-    marginBottom: 10, // Espaçamento para os pontos de paginação
+    marginBottom: 10,
+
   },
   eventImage: {
     width: '100%',
-    height: 200, // Aumentado para dar mais destaque à imagem
+    height: 150,
     resizeMode: 'cover',
   },
-  eventCardTitle: { // Novo estilo para o título do evento
+  eventCardTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     paddingHorizontal: 15,
-    paddingTop: 10,
+    paddingTop: 20,
     color: '#333',
   },
-  eventCardLocation: { // Novo estilo para o local
+  eventCardLocation: {
     fontSize: 14,
     color: '#666',
     paddingHorizontal: 15,
-    marginTop: 5,
+    marginTop: 20,
   },
-  eventCardDate: { // Novo estilo para a data
+  eventCardDate: {
     fontSize: 14,
     color: '#666',
     paddingHorizontal: 15,
@@ -285,18 +295,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 30,
   },
   paginationDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
     backgroundColor: '#ccc',
     marginHorizontal: 4,
   },
   paginationDotActive: {
-    backgroundColor: '#007AFF', // Cor do ponto ativo
-    width: 10, // Levemente maior
+    backgroundColor: '#007AFF',
+    width: 10,
     height: 10,
     borderRadius: 5,
   },
