@@ -126,15 +126,7 @@ export default function AdminScreen() {
         {/* Content Area */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Text style={styles.sectionTitle}>Gerenciamento de Eventos</Text>
-
-          <TouchableOpacity 
-            style={styles.createButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Ionicons name="add" size={24} color="white" />
-            <Text style={styles.createButtonText}>Criar Novo Evento</Text>
-          </TouchableOpacity>
-
+          
           {/* Lista de Eventos */}
           <Text style={styles.eventsTitle}>Eventos Cadastrados</Text>
           
