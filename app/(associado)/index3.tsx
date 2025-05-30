@@ -11,53 +11,46 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
-  // Ajuste a largura do card para permitir a visualização parcial dos cards adjacentes
-  const cardWidth = width * 0.85; // 85% da largura da tela para o card principal
-  const cardSpacing = 10; // Espaçamento entre os cards
-  const [activeIndex, setActiveIndex] = useState(0); // Estado para o índice do card ativo
-  const [currentScrollX, setCurrentScrollX] = useState(0); // Movido para dentro do componente
+  const cardWidth = width * 0.7; // Largura do card
+  const cardMarginRight = 15; // Margem direita do card
+  const [currentScrollX, setCurrentScrollX] = useState(0);
 
-  // Dados mockados para os eventos do carrossel com novos detalhes
+
+  // Dados mockados para os eventos do carrossel
   const events = [
     {
       id: '1',
-      image: require('../../assets/images/festajunina.jpg'), // Imagem para o primeiro card
-      // Corrigido: Usar 'title', 'location', 'date' para corresponder ao uso abaixo
-      title: 'O Jardim do Inimigo 25 anos -',
-      location: 'Fortaleza',
-      date: 'Fortaleza - CE\n12 Set. a 13 Set.',
+      image: require('../../assets/images/festajunina.jpg'), // Imagem do ExpoEcomm
+      text: 'Campinas Innovation Week...',
+      details: 'Pátio Ferroviário de Campinas - ...\n09 de Jun a 13 de Jun',
     },
     {
       id: '2',
       image: require('../../assets/images/festajunina.jpg'),
-      title: 'Ceará Trap Music Festival',
-      location: 'Fortaleza - CE',
-      date: 'Sábado, 28 Set. • 19h',
+      text: 'Ceará Trap Music Festival',
+      details: 'Fortaleza - CE | Sábado, 28 Set. • 19h',
     },
     {
       id: '3',
       image: require('../../assets/images/festajunina.jpg'),
-      title: 'Festa Junina APAE',
-      location: 'APAE Local',
-      date: 'Terça-feira, 14 Jun. • 13h',
+      text: 'Festa Junina APAE',
+      details: 'APAE 2025 | Terça-feira, 14 Jun. • 13h',
     },
     {
       id: '4',
       image: require('../../assets/images/festajunina.jpg'),
-      title: 'Mega Encontro Tech',
-      location: 'São Paulo - SP',
-      date: 'Sexta-feira, 05 Dez. • 09h',
+      text: 'Mega Encontro Tech',
+      details: 'São Paulo - SP | Sexta-feira, 05 Dez. • 09h',
     },
     {
       id: '5',
       image: require('../../assets/images/festajunina.jpg'),
-      title: 'Conferência de IA',
-      location: 'Rio de Janeiro - RJ',
-      date: 'Quarta-feira, 20 Nov. • 10h',
+      text: 'Conferência de IA',
+      details: 'Rio de Janeiro - RJ | Quarta-feira, 20 Nov. • 10h',
     },
   ];
 
-  const handleLoginPress = () => {
+ const handleLoginPress = () => {
     router.push('/login');
   };
 
@@ -66,26 +59,21 @@ export default function HomeScreen() {
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const contentOffsetX = event.nativeEvent.contentOffset.x;
-    // Calcula o índice do card ativo com base na posição do scroll
-    const newIndex = Math.round(contentOffsetX / (cardWidth + cardSpacing));
-    setActiveIndex(newIndex);
-    setCurrentScrollX(contentOffsetX); // Atualiza currentScrollX aqui
+    setCurrentScrollX(event.nativeEvent.contentOffset.x);
   };
 
-  // Funções scrollLeft e scrollRight não são mais necessárias com a remoção das setas
-  // Mas mantidas caso queira reintroduzir a navegação por botão no futuro.
   const scrollLeft = () => {
     if (scrollViewRef.current) {
-      const newX = Math.max(0, currentScrollX - (cardWidth + cardSpacing));
+      const newX = Math.max(0, currentScrollX - (cardWidth + cardMarginRight));
       scrollViewRef.current.scrollTo({ x: newX, animated: true });
     }
   };
 
   const scrollRight = () => {
     if (scrollViewRef.current) {
-      const maxScrollX = (events.length * (cardWidth + cardSpacing)) - width + cardSpacing;
-      const newX = Math.min(maxScrollX, currentScrollX + (cardWidth + cardSpacing));
+      const totalContentWidth = events.length * (cardWidth + cardMarginRight);
+      const maxScrollX = totalContentWidth - width + cardMarginRight;
+      const newX = Math.min(maxScrollX, currentScrollX + (cardWidth + cardMarginRight));
       scrollViewRef.current.scrollTo({ x: newX, animated: true });
     }
   };
@@ -100,42 +88,39 @@ export default function HomeScreen() {
             <ThemedText style={styles.eventsApaeText}>Eventos APAE</ThemedText>
           </ThemedView>
 
-          {/* Carrossel de Eventos */}
+          {/* Carrossel de Eventos com setas */}
           <ThemedView style={styles.carouselContainer}>
-            {/* Removido TouchableOpacity para as setas */}
+            <TouchableOpacity onPress={scrollLeft} style={styles.arrowButton}>
+              {/* Ícone de seta para a esquerda */}
+              {/* Certifique-se de que IconSymbol está importado e funciona corretamente */}
+              <ThemedText style={styles.arrowText}>{'<'}</ThemedText>
+            </TouchableOpacity>
+
             <ScrollView
               ref={scrollViewRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.eventsCarousel}
-              snapToInterval={cardWidth + cardSpacing} // Ajustado para o novo espaçamento
+              snapToInterval={cardWidth + cardMarginRight}
               decelerationRate="fast"
-              onScroll={handleScroll} // Atualiza o índice do card ativo
+              onScroll={handleScroll}
               scrollEventThrottle={16}
+              style={styles.carouselScrollView} 
             >
-              {events.map((event, index) => (
-                <TouchableOpacity key={event.id} style={[styles.eventCard, { marginRight: cardSpacing }]} onPress={() => handleEventPress(event.id)}>
+              {events.map(event => (
+                <TouchableOpacity key={event.id} style={styles.eventCard} onPress={() => handleEventPress(event.id)}>
                   <Image source={event.image} style={styles.eventImage} />
-                  <ThemedText style={styles.eventCardTitle}>{event.title}</ThemedText>
-                  <ThemedText style={styles.eventCardLocation}>{event.location}</ThemedText>
-                  <ThemedText style={styles.eventCardDate}>{event.date}</ThemedText>
+                  <ThemedText style={styles.eventCardText}>{event.text}</ThemedText>
+                  <ThemedText style={styles.eventCardDetails}>{event.details}</ThemedText>
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            {/* Removido TouchableOpacity para as setas */}
-          </ThemedView>
 
-          {/* Pontos de Paginação */}
-          <ThemedView style={styles.paginationDotsContainer}>
-            {events.map((_, index) => (
-              <ThemedView
-                key={index}
-                style={[
-                  styles.paginationDot,
-                  activeIndex === index && styles.paginationDotActive,
-                ]}
-              />
-            ))}
+            <TouchableOpacity onPress={scrollRight} style={styles.arrowButton}>
+              {/* Ícone de seta para a direita */}
+              {/* Certifique-se de que IconSymbol está importado e funciona corretamente */}
+              <ThemedText style={styles.arrowText}>{'>'}</ThemedText>
+            </TouchableOpacity>
           </ThemedView>
         </ThemedView>
 
@@ -179,8 +164,8 @@ const styles = StyleSheet.create({
     paddingRight: 10,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    position: 'absolute',
-    zIndex: 2,
+    position: 'absolute', // Essencial para zIndex
+    zIndex: 2, // A topBar fica acima do bodyContainer
     top: 0,
   },
   loginButton: {
@@ -199,20 +184,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ADD8E6',
     alignItems: 'center',
-    paddingTop: 0,
+    paddingTop: 0, // Removido padding para ajuste com a logo
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: 100,
-    zIndex: 1,
+    marginTop: 100, // Ajuste para que o bodyContainer comece abaixo da topBar
+    zIndex: 1, // Opcional, mas indica que está abaixo
   },
   centerLogo: {
     width: 150,
     height: 150,
     resizeMode: 'contain',
-    position: 'absolute',
-    top: 25,
-    left: (width / 2) - 75,
-    zIndex: 3,
+    position: 'absolute', // Posiciona a logo de forma absoluta
+    top: 25, // Ajuste para centralizar verticalmente na topBar
+    left: (width / 2) - 75, // Centraliza horizontalmente (largura da tela / 2 - metade da largura da logo)
+    zIndex: 3, // Garante que a logo fique acima de TUDO
+    borderRadius: 30,
   },
   eventsApaeContainer: {
     backgroundColor: '#FFD700',
@@ -220,7 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 10,
     marginBottom: 20,
-    marginTop: 75,
+    marginTop: 75, // Ajusta a posição abaixo da logo
   },
   eventsApaeText: {
     fontSize: 18,
@@ -228,22 +214,42 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   carouselContainer: {
-    // Removido flexDirection, alignItems, justifyContent pois as setas foram removidas
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 20,
-    width: '100%',
+    width: '100%', // Garante que o contêiner do carrossel ocupe a largura total
+    paddingHorizontal: 10, // Adiciona padding para as setas não ficarem coladas na borda
   },
-  // Removido arrowButton e arrowText styles
-  carouselScrollView: {
-    flex: 1,
-    // Adicionado paddingHorizontal para mostrar os cards adjacentes
-    paddingHorizontal: (width - (width * 0.85)) / 2,
+  arrowButton: {
+    padding: 5, // Reduzido o padding para as setas
+    backgroundColor: 'rgba(255,255,255,0.7)', // Fundo semi-transparente para as setas
+    borderRadius: 20, // Arredondar os botões das setas
+    width: 40, // Largura fixa para o botão da seta
+    height: 40, // Altura fixa para o botão da seta
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  arrowText: { // Estilo para o texto das setas (se IconSymbol não funcionar)
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  carouselScrollView: { // Novo estilo para o ScrollView
+    flex: 1, // Permite que o ScrollView ocupe o espaço restante entre as setas
   },
   eventsCarousel: {
     paddingBottom: 20,
-    // Removido paddingRight
+    // paddingRight: 40, // Removido, pois o padding do carouselContainer já lida com as bordas
   },
   eventCard: {
-    width: width * 0.85, // Largura do card principal
+    width: width * 0.7,
+    marginRight: 15,
     backgroundColor: '#fff',
     borderRadius: 10,
     overflow: 'hidden',
@@ -254,50 +260,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
-    marginBottom: 10, // Espaçamento para os pontos de paginação
   },
   eventImage: {
     width: '100%',
-    height: 200, // Aumentado para dar mais destaque à imagem
+    height: 150,
     resizeMode: 'cover',
   },
-  eventCardTitle: { // Novo estilo para o título do evento
-    fontSize: 20,
+  eventCardText: {
+    fontSize: 16,
     fontWeight: 'bold',
-    paddingHorizontal: 15,
-    paddingTop: 10,
+    padding: 10,
     color: '#333',
   },
-  eventCardLocation: { // Novo estilo para o local
-    fontSize: 14,
+  eventCardDetails: {
+    fontSize: 13,
     color: '#666',
-    paddingHorizontal: 15,
-    marginTop: 5,
-  },
-  eventCardDate: { // Novo estilo para a data
-    fontSize: 14,
-    color: '#666',
-    paddingHorizontal: 15,
-    paddingBottom: 15,
-    marginTop: 5,
-  },
-  paginationDotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#ccc',
-    marginHorizontal: 4,
-  },
-  paginationDotActive: {
-    backgroundColor: '#007AFF', // Cor do ponto ativo
-    width: 10, // Levemente maior
-    height: 10,
-    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
   },
 });
