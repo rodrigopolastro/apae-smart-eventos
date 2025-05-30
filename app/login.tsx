@@ -14,6 +14,8 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../api'; // Ajuste o caminho conforme onde você salvou api.ts
 
 export default function Login() {
   const router = useRouter();
@@ -35,32 +37,50 @@ export default function Login() {
 
     setLoading(true);
 
-    // try {
-    //   const response = await api.post('/auth/login', {
-    //     email,
-    //     password,
-    //   });
+    try {
+      const response = await api.post('/auth/login', { // Requisição para a rota de login
+        email,
+        password,
+      });
 
-    //   // Sucesso no login => armazenar o token aqui
-    //   // await AsyncStorage.setItem('@token', response.data.token);
+      // Sucesso no login => armazenar o token aqui
+      // --- ALTERAÇÃO AQUI: response.data.accessToken ao invés de response.data.token ---
+      if (response.data && response.data.accessToken) {
+        await AsyncStorage.setItem('@token', response.data.accessToken); // Armazenar o access token
+        // Opcional: Armazenar o refresh token também, se você for usá-lo para renovação
+        if (response.data.refreshToken) {
+          await AsyncStorage.setItem('@refreshToken', response.data.refreshToken);
+        }
 
-    //   // Redirecionar para a tela principal após login
-    //   navigation.navigate('Principal');
-    // } catch (error) {
-    //   let errorMessage = 'Erro ao realizar login';
+        Alert.alert('Sucesso', 'Login realizado com sucesso!');
+        // Redirecionar para a tela principal após login
+        router.replace('/homelogado');
+      } else {
+        // Se o backend não retornar o accessToken (ou o token genérico), mas a requisição foi bem-sucedida (status 2xx)
+        Alert.alert('Erro', 'Login bem-sucedido, mas o token de acesso não foi recebido.');
+      }
 
-    //   if (error.response) {
-    //     if (error.response.status === 401) {
-    //       errorMessage = 'Email ou senha incorretos';
-    //     } else if (error.response.data.message) {
-    //       errorMessage = error.response.data.message;
-    //     }
-    //   }
+    } catch (error: any) {
+      let errorMessage = 'Erro ao realizar login';
 
-    //   Alert.alert('Erro', errorMessage);
-    // } finally {
-    //   setLoading(false);
-    // }
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = 'Email ou senha incorretos';
+        } else if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else {
+          errorMessage = `Erro do servidor: ${error.response.status}`;
+        }
+      } else if (error.request) {
+        errorMessage = 'Erro de conexão. Verifique sua internet ou o endereço da API.';
+      } else {
+        errorMessage = `Erro: ${error.message}`;
+      }
+
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const validateEmail = (email: string) => {
@@ -75,9 +95,9 @@ export default function Login() {
     >
       <ThemedView style={styles.innerContainer}>
         <Image
-                  source={require('../assets/images/logoapae.png')} // Verifique se o caminho está correto
-                  style={styles.logo}
-                />
+          source={require('../assets/images/logoapae.png')}
+          style={styles.logo}
+        />
         <StatusBar hidden={true} />
         <ThemedText style={styles.title}>SmartEventos</ThemedText>
         <ThemedText style={styles.sectionTitle}>Login</ThemedText>
@@ -110,19 +130,11 @@ export default function Login() {
           <TouchableOpacity onPress={() => router.push('/signup')}>
             <Text style={styles.linkText}>Cadastre-se</Text>
           </TouchableOpacity>
-
-          {/* Removi a navegação para ForgotPasswordScreen para focar nos erros atuais */}
-          {/* <TouchableOpacity
-            onPress={() => navigation.navigate('ForgotPasswordScreen')}
-          >
-            <Text style={styles.linkText}>Esqueceu a senha?</Text>
-          </TouchableOpacity> */}
         </ThemedView>
       </ThemedView>
     </KeyboardAvoidingView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -133,12 +145,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  logo: { // Novo estilo para a imagem
-    width: 150, // Ajuste a largura conforme necessário
-    height: 150, // Ajuste a altura conforme necessário
-    alignSelf: 'center', // Centraliza a imagem horizontalmente
-    marginBottom: 40, // Espaçamento abaixo da imagem
-    resizeMode: 'contain', // Garante que a imagem se ajuste sem cortar
+  logo: {
+    width: 150,
+    height: 150,
+    alignSelf: 'center',
+    marginBottom: 40,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 24,
