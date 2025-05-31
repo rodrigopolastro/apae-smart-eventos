@@ -20,7 +20,6 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name='homelogado' options={{ headerShown: false }} /> 
         <Stack.Screen name='(associado)' options={{ headerShown: false }} /> 
         <Stack.Screen name='(admin)' options={{ headerShown: false }} />
         <Stack.Screen name='+not-found' />

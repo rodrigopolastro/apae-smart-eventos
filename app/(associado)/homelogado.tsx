@@ -1,10 +1,10 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useRouter } from 'expo-router';
-import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
+import { Dimensions, Image, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -57,8 +57,8 @@ export default function HomeScreen() {
     },
   ];
 
-  const handleLoginPress = () => {
-    router.push('/login');
+  const handleMeusIngressosPress = () => {
+    router.push('/meuingresso');
   };
 
   const handleEventPress = (eventId: string) => {
@@ -146,8 +146,8 @@ export default function HomeScreen() {
           end={{ x: 1, y: 0 }}
           style={styles.topBar}
         >
-          <TouchableOpacity onPress={handleLoginPress} style={styles.loginButton}>
-            <ThemedText style={styles.loginButtonText}>Login</ThemedText>
+          <TouchableOpacity onPress={handleMeusIngressosPress} style={styles.meusIngressosButton}>
+            <ThemedText style={styles.meusIngressosButtonText}>Meus Ingressos</ThemedText>
           </TouchableOpacity>
         </LinearGradient>
 
@@ -183,14 +183,14 @@ const styles = StyleSheet.create({
     zIndex: 2,
     top: 0,
   },
-  loginButton: {
+  meusIngressosButton: {
     backgroundColor: '#FFD700',
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 20,
     marginTop: 10,
   },
-  loginButtonText: {
+  meusIngressosButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',

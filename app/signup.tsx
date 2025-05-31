@@ -14,15 +14,21 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
+import api from '../api'; // <<<<<<<< IMPORTANTE: Importe a instância do Axios que você criou!
+// Se o seu api.ts estiver na raiz do projeto (apae-smart-eventos/api.ts) e o signup.tsx em app/signup.tsx,
+// o caminho relativo correto é '../api'. Se você organizou de outra forma (ex: src/api.ts),
+// pode precisar ajustar para '../../api' ou para um alias como '@/api' se configurado.
+
 export default function SignUp() {
   const router = useRouter();
+  const [name, setName] = useState(''); // <<<<<<<< NOVO: Estado para o nome
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    // Validações básicas
-    if (!email || !password) {
+    // Validações básicas (AGORA INCLUINDO O NOME)
+    if (!email || !password || !name) { // <<<<<<<< ATUALIZADO: Verificando 'name'
       Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
@@ -37,32 +43,55 @@ export default function SignUp() {
       return;
     }
 
-    // setLoading(true);
+    setLoading(true); // Inicia o indicador de carregamento
 
-    // try {
-    //   const response = await axios.post('https://sua-api.com/auth/register', {
-    //     email,
-    //     password,
-    //   });
+    try {
+      // <<<<<<<< INTEGRAÇÃO COM O BACKEND: Requisição POST para /users
+      const response = await api.post('/users', {
+           // Enviando o nome para o backend
+        email,
+        password,
+        name,
+      });
 
-    //   Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-    //   router.push('/login');
-    // } catch (error) {
-    //   // Tratamento de erros da API
-    //   let errorMessage = 'Erro ao realizar cadastro';
+      // Se a requisição foi bem-sucedida (status 201 Created)
+      if (response.status === 201) { // Verifique o status 201 para sucesso na criação
+        Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!');
+        router.replace('/login'); // Redireciona para a tela de login após o cadastro
+      } else {
+        // Embora Axios geralmente jogue um erro para status != 2xx,
+        // é bom ter um fallback aqui para casos inesperados.
+        Alert.alert('Erro', 'Ocorreu um erro inesperado no cadastro.');
+      }
+    } catch (error: any) { // <<<<<<<< Tratamento de erros da requisição
+      let errorMessage = 'Erro ao realizar cadastro';
 
-    //   if (error.response) {
-    //     if (error.response.status === 400) {
-    //       errorMessage = 'Email já cadastrado';
-    //     } else if (error.response.data.message) {
-    //       errorMessage = error.response.data.message;
-    //     }
-    //   }
+      if (error.response) {
+        // O servidor respondeu com um status diferente de 2xx
+        if (error.response.status === 409) { // Código 409 para Conflito (e-mail já registrado)
+          errorMessage = 'Este e-mail já está cadastrado.';
+        } else if (error.response.status === 400) { // Código 400 para Bad Request (dados inválidos)
+          // Se o backend retornar uma mensagem de erro específica no data.message
+          errorMessage = error.response.data.message || 'Dados inválidos para cadastro.';
+        } else if (error.response.data && error.response.data.message) {
+          // Para outros erros do servidor que tenham uma mensagem customizada
+          errorMessage = error.response.data.message;
+        } else {
+          // Para erros do servidor sem mensagem customizada
+          errorMessage = `Erro do servidor: ${error.response.status}`;
+        }
+      } else if (error.request) {
+        // A requisição foi feita, mas não houve resposta (ex: rede offline, URL incorreta)
+        errorMessage = 'Erro de conexão. Verifique sua internet ou o endereço da API.';
+      } else {
+        // Algo aconteceu na configuração da requisição que disparou um erro (ex: problema no código Axios)
+        errorMessage = `Erro: ${error.message}`;
+      }
 
-    //   Alert.alert('Erro', errorMessage);
-    // } finally {
-    //   setLoading(false);
-    // }
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setLoading(false); // Finaliza o indicador de carregamento
+    }
   };
 
   const validateEmail = (email: string) => {
@@ -77,12 +106,22 @@ export default function SignUp() {
     >
       <ThemedView style={styles.innerContainer}>
         <Image
-                  source={require('../assets/images/logoapae.png')} // Verifique se o caminho está correto
-                  style={styles.logo}
-                />
+          source={require('../assets/images/logoapae.png')}
+          style={styles.logo}
+        />
         <ThemedText style={styles.title}>SmartEventos</ThemedText>
 
         <ThemedText style={styles.sectionTitle}>Cadastre-se</ThemedText>
+
+        {/* <<<<<<<< NOVO: TextInput para o nome */}
+        <ThemedText style={styles.label}>Nome:</ThemedText>
+        <TextInput
+          style={styles.input}
+          placeholder='Digite seu nome:'
+          value={name}
+          onChangeText={setName}
+          autoCapitalize='words' // Capitaliza as primeiras letras de cada palavra
+        />
 
         <ThemedText style={styles.label}>Email</ThemedText>
         <TextInput
@@ -131,12 +170,12 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
-  logo: { // Novo estilo para a imagem
-    width: 150, // Ajuste a largura conforme necessário
-    height: 150, // Ajuste a altura conforme necessário
-    alignSelf: 'center', // Centraliza a imagem horizontalmente
-    marginBottom: 40, // Espaçamento abaixo da imagem
-    resizeMode: 'contain', // Garante que a imagem se ajuste sem cortar
+  logo: {
+    width: 150,
+    height: 150,
+    alignSelf: 'center',
+    marginBottom: 40,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 24,
