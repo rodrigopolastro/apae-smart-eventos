@@ -3,92 +3,96 @@ import { ThemedView } from '@/components/ThemedView';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Image,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
+  ScrollView, // Importado para permitir rolagem
+  Dimensions, // Importado para Dimensions.get('window').width
 } from 'react-native';
 
-import api from '../api'; // <<<<<<<< IMPORTANTE: Importe a instância do Axios que você criou!
-// Se o seu api.ts estiver na raiz do projeto (apae-smart-eventos/api.ts) e o signup.tsx em app/signup.tsx,
-// o caminho relativo correto é '../api'. Se você organizou de outra forma (ex: src/api.ts),
-// pode precisar ajustar para '../../api' ou para um alias como '@/api' se configurado.
+import api from '../api'; // Importe a instância do Axios que você criou!
+import CustomHeader from '@/components/CustomHeader'; // Importa o CustomHeader
+import CustomAlert from '@/components/CustomAlert'; // Importa o CustomAlert
+
+const { width } = Dimensions.get('window'); // Obtém a largura da janela para cálculos de estilo
 
 export default function SignUp() {
   const router = useRouter();
-  const [name, setName] = useState(''); // <<<<<<<< NOVO: Estado para o nome
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false); // Estado para visibilidade do alerta
+  const [alertMessage, setAlertMessage] = useState(''); // Estado para a mensagem do alerta
+
+  // Função para exibir o alerta personalizado
+  const showAlert = (message: string) => {
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
+  // Função para esconder o alerta personalizado
+  const hideAlert = () => {
+    setAlertVisible(false);
+    setAlertMessage('');
+  };
 
   const handleRegister = async () => {
-    // Validações básicas (AGORA INCLUINDO O NOME)
-    if (!email || !password || !name) { // <<<<<<<< ATUALIZADO: Verificando 'name'
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+    // Validações básicas
+    if (!email || !password || !name) {
+      showAlert('Por favor, preencha todos os campos');
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert('Erro', 'Por favor, insira um email válido');
+      showAlert('Por favor, insira um email válido');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      showAlert('A senha deve ter pelo menos 6 caracteres');
       return;
     }
 
     setLoading(true); // Inicia o indicador de carregamento
 
     try {
-      // <<<<<<<< INTEGRAÇÃO COM O BACKEND: Requisição POST para /users
       const response = await api.post('/users', {
-           // Enviando o nome para o backend
+        name,
         email,
         password,
-        name,
       });
 
-      // Se a requisição foi bem-sucedida (status 201 Created)
-      if (response.status === 201) { // Verifique o status 201 para sucesso na criação
-        Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!');
+      if (response.status === 201) {
+        showAlert('Usuário cadastrado com sucesso!');
         router.replace('/login'); // Redireciona para a tela de login após o cadastro
       } else {
-        // Embora Axios geralmente jogue um erro para status != 2xx,
-        // é bom ter um fallback aqui para casos inesperados.
-        Alert.alert('Erro', 'Ocorreu um erro inesperado no cadastro.');
+        showAlert('Ocorreu um erro inesperado no cadastro.');
       }
-    } catch (error: any) { // <<<<<<<< Tratamento de erros da requisição
+    } catch (error: any) {
       let errorMessage = 'Erro ao realizar cadastro';
 
       if (error.response) {
-        // O servidor respondeu com um status diferente de 2xx
-        if (error.response.status === 409) { // Código 409 para Conflito (e-mail já registrado)
+        if (error.response.status === 409) {
           errorMessage = 'Este e-mail já está cadastrado.';
-        } else if (error.response.status === 400) { // Código 400 para Bad Request (dados inválidos)
-          // Se o backend retornar uma mensagem de erro específica no data.message
+        } else if (error.response.status === 400) {
           errorMessage = error.response.data.message || 'Dados inválidos para cadastro.';
         } else if (error.response.data && error.response.data.message) {
-          // Para outros erros do servidor que tenham uma mensagem customizada
           errorMessage = error.response.data.message;
         } else {
-          // Para erros do servidor sem mensagem customizada
           errorMessage = `Erro do servidor: ${error.response.status}`;
         }
       } else if (error.request) {
-        // A requisição foi feita, mas não houve resposta (ex: rede offline, URL incorreta)
         errorMessage = 'Erro de conexão. Verifique sua internet ou o endereço da API.';
       } else {
-        // Algo aconteceu na configuração da requisição que disparou um erro (ex: problema no código Axios)
         errorMessage = `Erro: ${error.message}`;
       }
 
-      Alert.alert('Erro', errorMessage);
+      showAlert(errorMessage); // Exibe o erro usando o alerta personalizado
     } finally {
       setLoading(false); // Finaliza o indicador de carregamento
     }
@@ -104,58 +108,67 @@ export default function SignUp() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ThemedView style={styles.innerContainer}>
-        <Image
-          source={require('../assets/images/logoapae.png')}
-          style={styles.logo}
-        />
-        <ThemedText style={styles.title}>SmartEventos</ThemedText>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContentContainer}>
+          {/* CustomHeader como o primeiro elemento rolável */}
+          <CustomHeader />
 
-        <ThemedText style={styles.sectionTitle}>Cadastre-se</ThemedText>
+          {/* Wrapper para o conteúdo do formulário de cadastro */}
+          <ThemedView style={styles.signupContentWrapper}>
+            {/* O título "Cadastre-se" agora está dentro do formulário */}
+            <ThemedText style={styles.sectionTitle}>Cadastre-se</ThemedText>
 
-        {/* <<<<<<<< NOVO: TextInput para o nome */}
-        <ThemedText style={styles.label}>Nome:</ThemedText>
-        <TextInput
-          style={styles.input}
-          placeholder='Digite seu nome:'
-          value={name}
-          onChangeText={setName}
-          autoCapitalize='words' // Capitaliza as primeiras letras de cada palavra
-        />
+            <ThemedText style={styles.label}>Nome:</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder='Digite seu nome:'
+              value={name}
+              onChangeText={setName}
+              autoCapitalize='words'
+            />
 
-        <ThemedText style={styles.label}>Email</ThemedText>
-        <TextInput
-          style={styles.input}
-          placeholder='Digite seu email:'
-          value={email}
-          onChangeText={setEmail}
-          keyboardType='email-address'
-          autoCapitalize='none'
-        />
+            <ThemedText style={styles.label}>Email:</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder='Digite seu email:'
+              value={email}
+              onChangeText={setEmail}
+              keyboardType='email-address'
+              autoCapitalize='none'
+            />
 
-        <ThemedText style={styles.label}>Senha:</ThemedText>
-        <TextInput
-          style={styles.input}
-          placeholder='Digite sua senha:'
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+            <ThemedText style={styles.label}>Senha:</ThemedText>
+            <TextInput
+              style={styles.input}
+              placeholder='Digite sua senha:'
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
 
-        <ThemedView style={styles.divider} />
+            <ThemedView style={styles.divider} />
 
-        {loading ? (
-          <ActivityIndicator size='large' color='#0000ff' />
-        ) : (
-          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-            <Text style={styles.registerButtonText}>Cadastrar</Text>
-          </TouchableOpacity>
-        )}
+            {loading ? (
+              <ActivityIndicator size='large' color='#0000ff' />
+            ) : (
+              <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+                <ThemedText style={styles.registerButtonText}>Cadastrar</ThemedText>
+              </TouchableOpacity>
+            )}
 
-        <TouchableOpacity style={styles.loginLink} onPress={() => router.push('/login')}>
-          <Text style={styles.loginLinkText}>Já tem uma conta? Login</Text>
-        </TouchableOpacity>
-      </ThemedView>
+            {/* <TouchableOpacity style={styles.loginLink} onPress={() => router.push('/login')}>
+              <ThemedText style={styles.loginLinkText}>Já tem uma conta? Login</ThemedText>
+            </TouchableOpacity> */}
+          </ThemedView>
+        </ScrollView>
+      </SafeAreaView>
+
+      {/* CustomAlert é renderizado fora do ScrollView para ser um overlay */}
+      <CustomAlert
+        visible={alertVisible}
+        message={alertMessage}
+        onClose={hideAlert}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -163,38 +176,41 @@ export default function SignUp() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ADD8E6', // Cor de fundo principal da tela
   },
-  innerContainer: {
+  safeArea: {
     flex: 1,
+    backgroundColor: 'transparent',
+  },
+  scrollContentContainer: {
+    alignItems: 'center', // Centraliza o conteúdo horizontalmente
+    paddingBottom: 40, // Adiciona um padding no final para rolagem
+  },
+  signupContentWrapper: { // Estilo para o wrapper do formulário de cadastro
+    width: '90%', // Largura do contêiner do formulário
+    backgroundColor: 'transparent', // Fundo branco para o formulário
+    borderRadius: 10,
     padding: 20,
-    justifyContent: 'center',
+    // Margem negativa para puxar o formulário para cima e criar a sobreposição com a logo
+    marginTop: -35, // Metade da altura da logo (130 / 2 = 65) do CustomHeader
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 5,
+    // elevation: 3,
   },
-  logo: {
-    width: 150,
-    height: 150,
-    alignSelf: 'center',
-    marginBottom: 40,
-    resizeMode: 'contain',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 40,
-    color: '#333',
-  },
-  sectionTitle: {
+  sectionTitle: { // Estilo para o título "Cadastre-se" dentro do formulário
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 20,
-    color: '#333',
+    textAlign: 'center',
+    color: '#000',
   },
   label: {
     fontSize: 16,
     marginBottom: 8,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
   },
   input: {
     height: 50,
@@ -211,23 +227,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#eee',
     marginVertical: 20,
   },
-  registerButton: {
-    backgroundColor: '#0066cc',
+  registerButton: { // Botão de cadastro
+    backgroundColor: '#00527c', // Cor de fundo do botão
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
   },
-  registerButtonText: {
-    color: 'white',
+  registerButtonText: { // Texto do botão de cadastro
     fontSize: 16,
     fontWeight: '600',
+    color: '#fff',
   },
-  loginLink: {
+  loginLink: { // Link "Já tem uma conta? Login"
     alignItems: 'center',
   },
-  loginLinkText: {
-    color: '#0066cc',
+  loginLinkText: { // Texto do link
+    color: '#00527c',
     fontSize: 16,
     fontWeight: '500',
   },

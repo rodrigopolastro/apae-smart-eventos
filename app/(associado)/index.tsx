@@ -1,76 +1,66 @@
-import { LinearGradient } from 'expo-linear-gradient';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  Dimensions,
-  Image,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useRef, useState } from 'react';
+import CustomHeader from '@/components/CustomHeader'; // Importa o novo componente de cabeçalho
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+
+// A altura fixa do cabeçalho não é mais usada para padding, pois ele rola com o conteúdo.
+// A constante pode ser removida se não for usada em outro lugar.
+// const FIXED_HEADER_HEIGHT = 160 + 20 + 75;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const scrollViewRef = React.useRef<ScrollView>(null);
-  
-  const cardWidth = width * 0.8;
-  const cardSpacing = 20;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const cardWidth = width * 0.85;
+  const cardSpacing = 10;
   const [activeIndex, setActiveIndex] = useState(0);
   const [currentScrollX, setCurrentScrollX] = useState(0);
 
+  // Dados mockados para os eventos do carrossel e lista
   const events = [
     {
       id: '1',
-      image: require('../../assets/images/festajunina.jpg'),
+      image: require('../../assets/images/festajunina.jpg'), // Imagem para o primeiro card (O Jardim do Inimigo)
       title: 'O Jardim do Inimigo 25 anos',
-      location: 'Fortaleza - CE',
-      date: '12 - 13 Set',
-      category: 'Música',
-      participants: '2.5k',
+      location: 'Fortaleza',
+      date: '12 Set. a 13 Set.',
+      description: 'Uma peça teatral emocionante e aclamada, celebrando 25 anos de sucesso. Uma experiência única para os amantes da arte e do teatro. Não perca!',
     },
     {
       id: '2',
-      image: require('../../assets/images/festajunina.jpg'),
-      title: 'Ceará Trap Music Festival',
-      location: 'Fortaleza - CE',
-      date: '28 Set • 19h',
-      category: 'Festival',
-      participants: '1.8k',
+      image: require('../../assets/images/festajunina.jpg'), // Imagem de exemplo do ExpoEcomm
+      title: 'ExpoEcomm 2025',
+      location: 'São Paulo - SP',
+      date: '15 Ago. a 16 Ago.',
+      description: 'A maior feira de e-commerce e marketing digital do Brasil. Networking, palestras com especialistas e as últimas tendências do mercado.',
     },
     {
       id: '3',
-      image: require('../../assets/images/festajunina.jpg'),
-      title: 'Festa Junina APAE',
-      location: 'APAE Local',
-      date: '14 Jun • 13h',
-      category: 'Cultural',
-      participants: '500',
+      image: require('../../assets/images/festajunina.jpg'), // Imagem de exemplo do Submarino (Conferência de IA)
+      title: 'Conferência de IA',
+      location: 'Rio de Janeiro - RJ',
+      date: 'Quarta-feira, 20 Nov. • 10h',
+      description: 'Explore o futuro da inteligência artificial com líderes e inovadores da indústria. Palestras, workshops e demonstrações de tecnologias emergentes.',
     },
     {
       id: '4',
-      image: require('../../assets/images/festajunina.jpg'),
-      title: 'Mega Encontro Tech',
-      location: 'São Paulo - SP',
-      date: '05 Dez • 09h',
-      category: 'Tecnologia',
-      participants: '3.2k',
+      image: require('../../assets/images/festajunina.jpg'), // Mantendo festajunina se existir
+      title: 'Festa Junina APAE',
+      location: 'APAE Local',
+      date: 'Terça-feira, 14 Jun. • 13h',
+      description: 'Celebre a tradicional Festa Junina da APAE com muita música, dança e comidas típicas. Um evento para toda a família e para apoiar uma causa nobre.',
     },
     {
       id: '5',
-      image: require('../../assets/images/festajunina.jpg'),
-      title: 'Conferência de IA',
-      location: 'Rio de Janeiro - RJ',
-      date: '20 Nov • 10h',
-      category: 'Tech',
-      participants: '1.5k',
+      image: require('../../assets/images/festajunina.jpg'), // Mantendo placeholder se existir
+      title: 'Conferência de Dados',
+      location: 'Belo Horizonte - MG',
+      date: 'Terça-feira, 03 Dez. • 14h',
+      description: 'Imersão no mundo dos dados, analytics e big data. Aprenda com os melhores profissionais e descubra como a análise de dados pode transformar negócios.',
     },
   ];
 
@@ -89,522 +79,300 @@ export default function HomeScreen() {
     setCurrentScrollX(contentOffsetX);
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'Música': '#FF6B6B',
-      'Festival': '#4ECDC4',
-      'Cultural': '#45B7D1',
-      'Tecnologia': '#96CEB4',
-      'Tech': '#FECA57'
-    };
-    return colors[category] || '#DDA0DD';
+  const scrollLeft = () => {
+    if (scrollViewRef.current) {
+      const newX = Math.max(0, currentScrollX - (cardWidth + cardSpacing));
+      scrollViewRef.current.scrollTo({ x: newX, animated: true });
+    }
   };
 
-  // Debug: Vamos verificar os eventos que deveriam aparecer na lista vertical
-  const carouselEvents = events.slice(0, 3);
-  const verticalEvents = events.slice(3);
-  
-  console.log('Total de eventos:', events.length);
-  console.log('Eventos do carrossel:', carouselEvents.length);
-  console.log('Eventos da lista vertical:', verticalEvents.length);
-  console.log('Eventos verticais:', verticalEvents.map(e => e.title));
+  const scrollRight = () => {
+    if (scrollViewRef.current) {
+      const maxScrollX = (events.length * (cardWidth + cardSpacing)) - width + cardSpacing;
+      const newX = Math.min(maxScrollX, currentScrollX + (cardWidth + cardSpacing));
+      scrollViewRef.current.scrollTo({ x: newX, animated: true });
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
-      {/* Header com gradiente */}
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <SafeAreaView style={styles.headerContent}>
-          <View style={styles.headerTop}>
-            <View style={styles.welcomeContainer}>
-              <Text style={styles.welcomeText}>Olá! 👋</Text>
-              <Text style={styles.subtitle}>Descubra eventos incríveis</Text>
-            </View>
-            <TouchableOpacity onPress={handleLoginPress} style={styles.loginButton}>
-              <Text style={styles.loginButtonText}>Entrar</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/images/SmartEventos2.png')}
-              style={styles.centerLogo}
-            />
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+    <ThemedView style={styles.mainContainer}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* ScrollView para todo o conteúdo, incluindo o cabeçalho */}
+        <ScrollView
+          style={styles.scrollContent}
+          contentContainerStyle={styles.scrollContentContainer}
+        >
+          {/* O novo componente de cabeçalho, agora rolável */}
+          <CustomHeader onLoginPress={handleLoginPress} />
 
-      {/* Corpo principal */}
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        {/* Badge "Eventos APAE" */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.badgeContainer}>
-            <LinearGradient
-              colors={['#FFD700', '#FFA500']}
-              style={styles.badge}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Text style={styles.badgeText}>✨ Eventos APAE</Text>
-            </LinearGradient>
-          </View>
-          <Text style={styles.sectionSubtitle}>Próximos eventos para você</Text>
-        </View>
+          {/* Corpo principal com azul mais claro - Agora dentro do ScrollView */}
+          {/* Este ThemedView atua como o 'bodyContainer' do fluxo anterior,
+              mas agora ele começa logo após o CustomHeader */}
+          <ThemedView style={styles.bodyContentWrapper}>
+            {/* Texto "Eventos APAE" com fundo amarelo */}
+            <ThemedView style={styles.eventsApaeContainer}>
+              <ThemedText style={styles.eventsApaeText}>Principais Eventos do Mês</ThemedText>
+            </ThemedView>
 
-        {/* Carrossel de eventos (primeiros 3) */}
-        <View style={styles.carouselSection}>
-          <ScrollView
-            ref={scrollViewRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContent}
-            snapToInterval={cardWidth + cardSpacing}
-            decelerationRate="fast"
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            pagingEnabled={false}
-          >
-            {carouselEvents.map((event, index) => (
-              <TouchableOpacity 
-                key={event.id} 
-                style={[styles.eventCard, { marginRight: index === carouselEvents.length - 1 ? 20 : cardSpacing }]}
-                onPress={() => handleEventPress(event.id)}
-                activeOpacity={0.9}
+            {/* Carrossel de Eventos (apenas os 3 primeiros) */}
+            <ThemedView style={styles.carouselContainer}>
+              <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.eventsCarousel}
+                snapToInterval={cardWidth + cardSpacing}
+                decelerationRate="fast"
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
               >
-                <View style={styles.cardImageContainer}>
-                  <Image source={event.image} style={styles.eventImage} />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.7)']}
-                    style={styles.imageOverlay}
-                  />
-                  <View style={styles.categoryBadge}>
-                    <Text style={[styles.categoryText, { backgroundColor: getCategoryColor(event.category) }]}>
-                      {event.category}
-                    </Text>
-                  </View>
-                  <View style={styles.participantsContainer}>
-                    <Text style={styles.participantsText}>👥 {event.participants}</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.cardContent}>
-                  <Text style={styles.eventTitle} numberOfLines={2}>
-                    {event.title}
-                  </Text>
-                  <View style={styles.eventDetails}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📍</Text>
-                      <Text style={styles.detailText} numberOfLines={1}>
-                        {event.location}
-                      </Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📅</Text>
-                      <Text style={styles.detailText}>
-                        {event.date}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+                {events.slice(0, 3).map((event, index) => ( // Mostra apenas os 3 primeiros eventos
+                  <TouchableOpacity key={event.id} style={[styles.eventCard, { marginRight: cardSpacing }]} onPress={() => handleEventPress(event.id)}>
+                    <Image source={event.image} style={styles.eventImage} />
+                    <ThemedText style={styles.eventCardTitle}>{event.title}</ThemedText>
+                    <ThemedText style={styles.eventCardLocation}>{event.location}</ThemedText>
+                    <ThemedText style={styles.eventCardDate}>{event.date}</ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </ThemedView>
 
-        {/* Indicadores de paginação */}
-        <View style={styles.paginationContainer}>
-          {carouselEvents.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.paginationDot,
-                activeIndex === index && styles.paginationDotActive,
-              ]}
-            />
-          ))}
-        </View>
+            {/* Pontos de Paginação */}
+            <ThemedView style={styles.paginationDotsContainer}>
+              {events.slice(0, 3).map((_, index) => ( // Pontos apenas para os 3 primeiros eventos
+                <ThemedView
+                  key={index}
+                  style={[
+                    styles.paginationDot,
+                    activeIndex === index && styles.paginationDotActive,
+                  ]}
+                />
+              ))}
+            </ThemedView>
 
-        {/* Lista vertical dos outros eventos - SEMPRE MOSTRAR PARA DEBUG */}
-        <View style={styles.otherEventsSection}>
-          <Text style={styles.otherEventsTitle}>
-            Outros Eventos ({verticalEvents.length})
-          </Text>
-          {verticalEvents.length > 0 ? (
-            <View style={styles.verticalEventsList}>
-              {verticalEvents.map((event) => (
-                <TouchableOpacity 
-                  key={event.id}
-                  style={styles.verticalEventCard}
-                  onPress={() => handleEventPress(event.id)}
-                  activeOpacity={0.8}
-                >
-                  <Image source={event.image} style={styles.verticalEventImage} />
-                  <View style={styles.verticalEventContent}>
-                    <View style={styles.verticalEventHeader}>
-                      <Text style={styles.verticalEventTitle} numberOfLines={2}>
-                        {event.title}
-                      </Text>
-                      <View style={[styles.verticalCategoryBadge, { backgroundColor: getCategoryColor(event.category) }]}>
-                        <Text style={styles.verticalCategoryText}>{event.category}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.verticalEventDetails}>
-                      <View style={styles.verticalDetailRow}>
-                        <Text style={styles.detailIcon}>📍</Text>
-                        <Text style={styles.verticalDetailText} numberOfLines={1}>
-                          {event.location}
-                        </Text>
-                      </View>
-                      <View style={styles.verticalDetailRow}>
-                        <Text style={styles.detailIcon}>📅</Text>
-                        <Text style={styles.verticalDetailText}>
-                          {event.date}
-                        </Text>
-                      </View>
-                      <View style={styles.verticalDetailRow}>
-                        <Text style={styles.detailIcon}>👥</Text>
-                        <Text style={styles.verticalDetailText}>
-                          {event.participants} participantes
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
+            {/* Lista de Todos os Eventos (vertical) */}
+            <ThemedView style={styles.allEventsListContainer}>
+              <ThemedText style={styles.allEventsListTitle}>Todos os Eventos</ThemedText>
+              {events.map(event => (
+                <TouchableOpacity key={event.id + '-list'} style={styles.listItemCard} onPress={() => handleEventPress(event.id)}>
+                  <Image source={event.image} style={styles.listItemImage} />
+                  <ThemedView style={styles.listItemTextContent}>
+                    <ThemedText style={styles.listItemTitle}>{event.title}</ThemedText>
+                    <ThemedText style={styles.listItemLocation}>{event.location}</ThemedText>
+                    <ThemedText style={styles.listItemDate}>{event.date}</ThemedText>
+                    <ThemedText style={styles.listItemDescription}>{event.description}</ThemedText>
+                  </ThemedView>
                 </TouchableOpacity>
               ))}
-            </View>
-          ) : (
-            <Text style={styles.noEventsText}>Nenhum evento adicional encontrado</Text>
-          )}
-        </View>
-
-      </ScrollView>
-    </View>
+            </ThemedView>
+          </ThemedView>
+        </ScrollView>
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor:'#ADD8E6', // Cor de fundo principal
   },
-  header: {
-    paddingTop: StatusBar.currentHeight || 0,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
-  headerContent: {
+  // Estilo para o ScrollView que conterá todo o conteúdo rolável
+  scrollContent: {
+    flex: 1,
+    backgroundColor: 'transparent', // O fundo será o bodyContentWrapper
+  },
+  // Estilo para o contentContainerStyle do ScrollView
+  scrollContentContainer: {
+    // Removido paddingTop, pois o CustomHeader agora está dentro do fluxo e ocupa seu próprio espaço
+    alignItems: 'center', // Centraliza o conteúdo horizontalmente
+    paddingBottom: 40, // Adiciona um padding no final do scroll
+    backgroundColor: 'transparent',
+  },
+  // Este wrapper agora contém o conteúdo que antes estava no bodyContainer
+  bodyContentWrapper: {
+    width: '100%', // Ocupa a largura total do ScrollView
+    //alignItems: 'center',
+   // backgroundColor: '#A0c8c3', // Cor de fundo do corpo
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    borderRadius:30,
+    // Removido position: 'absolute' e zIndex daqui, pois ele está no fluxo do ScrollView
+    // Removido paddingTop, pois o CustomHeader já gerencia seu próprio espaço
+    backgroundColor: 'transparent',
+  },
+  eventsApaeContainer: {
+    backgroundColor: 'transparent',
+    paddingVertical: 5,
     paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 3,
+    marginTop: 10, // Espaçamento abaixo da área da logo
+    
+  },
+  eventsApaeText: {
+    // fontSize:22,
+    // //fontWeight: 'bold',  
+    // color:'black',
+    // textShadowColor: '#000', // Cor da sombra do texto (preto)
+    // textShadowOffset: { width: 0, height: 0 }, // Deslocamento da sombra (2px para direita e 2px para baixo)
+    // textShadowRadius: 2, // Raio de desfoque da sombra
+    fontSize: 22,
+    fontWeight: 'bold',
+    //marginBottom: 15,
+    color: '#333',
+    textAlign: 'left',
+    
+  },
+  carouselContainer: {
+    //marginBottom: 20,
+    width: '100%',
+    //borderRadius:20,
+    padding: 10,
+    height:300,
+   // paddingTop:25,
+   // backgroundColor: '#48a3a7',
+   //backgroundColor: 'rgb(233, 252, 250)',
+   backgroundColor: '#ADD8E6'
+   
+    // shadowColor: '#000', // Cor da sombra preta
+    // shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo
+    // shadowOpacity: 1, // Opacidade aumentada para 40%
+    // shadowRadius: 10, // Raio de desfoque maior
+    // elevation: 10, // Propriedade específica para Android, aumentada
+    
+  },
+  carouselScrollView: {
+    flex: 1,
+    paddingHorizontal: (width - (width * 0.85)) / 2,
+  },
+  eventsCarousel: {
     paddingBottom: 20,
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginTop: 10,
-  },
-  welcomeContainer: {
-    flex: 1,
-  },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  loginButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  loginButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 15,
-  },
-  centerLogo: {
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  body: {
-    flex: 1,
-    paddingTop: 20,
-  },
-  sectionHeader: {
-    alignItems: 'center',
-    marginBottom: 25,
-    paddingHorizontal: 20,
-  },
-  badgeContainer: {
-    marginBottom: 8,
-  },
-  badge: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  badgeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  sectionSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  carouselSection: {
-    marginBottom: 20,
-  },
-  carouselContent: {
-    paddingLeft: 20,
-  },
   eventCard: {
-    width: width * 0.8,
+    width: width * 0.85, // Largura do card principal
     backgroundColor: '#fff',
-    borderRadius: 20,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
-  },
-  cardImageContainer: {
-    position: 'relative',
-    height: 200,
+   // borderWidth: 1,
+    //borderColor: 'yellow',
+    shadowColor: 'yellow', // Cor da sombra preta
+    shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo
+    shadowOpacity: 1, // Opacidade aumentada para 40%
+    shadowRadius: 8, // Raio de desfoque maior
+    elevation: 6, // Propriedade específica para Android, aumentada
+    
   },
   eventImage: {
     width: '100%',
-    height: '100%',
+    height: 150, // Aumentado para dar mais destaque à imagem
     resizeMode: 'cover',
   },
-  imageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-  },
-  categoryBadge: {
-    position: 'absolute',
-    top: 15,
-    left: 15,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  participantsContainer: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  participantsText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  cardContent: {
-    padding: 20,
-  },
-  eventTitle: {
+  eventCardTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 12,
-    lineHeight: 24,
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    color: '#333',
   },
-  eventDetails: {
-    gap: 8,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailIcon: {
+  eventCardLocation: {
     fontSize: 14,
-    marginRight: 8,
-    width: 20,
+    color: '#666',
+    paddingHorizontal: 15,
+    marginTop: 5,
   },
-  detailText: {
+  eventCardDate: {
     fontSize: 14,
-    color: '#7f8c8d',
-    flex: 1,
+    color: '#666',
+    paddingHorizontal: 15,
+    paddingBottom: 15,
+    marginTop: 5,
   },
-  paginationContainer: {
+  paginationDotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
-    gap: 8,
+    marginTop: 10,
+    borderRadius:20,
+    padding:5,
+    backgroundColor: 'transparent',
   },
   paginationDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ddd',
+    backgroundColor: 'yellow',
+    marginHorizontal: 4,
   },
   paginationDotActive: {
-    backgroundColor: '#667eea',
-    width: 24,
-    borderRadius: 12,
+    backgroundColor: '#006db2',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  quickActionsSection: {
-    paddingHorizontal: 20,
-    marginBottom: 30,
+  // Estilos para a lista de todos os eventos
+  allEventsListContainer: {
+    width: '100%', // Largura da lista
+    marginTop: 30, // Espaçamento acima da lista
+    paddingHorizontal: 10,
+    backgroundColor: 'transparent',
   },
-  quickActionsTitle: {
-    fontSize: 20,
+  allEventsListTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#2c3e50',
     marginBottom: 15,
+    color: '#333',
+    textAlign: 'left',
   },
-  quickActionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  quickActionButton: {
-    flex: 1,
-    borderRadius: 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  quickActionGradient: {
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  quickActionIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  quickActionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-  },
-  // Estilos para a seção de outros eventos
-  otherEventsSection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  otherEventsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 15,
-  },
-  verticalEventsList: {
-    gap: 12,
-  },
-  verticalEventCard: {
+  listItemCard: {
+    flexDirection: 'row', // Imagem ao lado do texto
     backgroundColor: '#fff',
-    borderRadius: 12,
-    flexDirection: 'row',
+    borderRadius: 10,
     overflow: 'hidden',
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#ddd',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 5,
+    elevation: 3,
+    marginBottom: 15, // Espaçamento entre os itens da lista
+    
   },
-  verticalEventImage: {
-    width: 80,
-    height: 80,
+  listItemImage: {
+    width: 100, // Largura da imagem na lista
+    height: 100, // Altura da imagem na lista
     resizeMode: 'cover',
+    borderRadius: 8, // Cantos arredondados para a imagem
+    margin: 10, // Margem interna
   },
-  verticalEventContent: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
+  listItemTextContent: {
+    flex: 1, // Ocupa o restante do espaço
+    padding: 10,
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
-  verticalEventHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  verticalEventTitle: {
-    fontSize: 16,
+  listItemTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
-    flex: 1,
-    marginRight: 8,
+    color: '#333',
+    marginBottom: 5,
   },
-  verticalCategoryBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 8,
-  },
-  verticalCategoryText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  verticalEventDetails: {
-    gap: 4,
-  },
-  verticalDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  verticalDetailText: {
-    fontSize: 12,
-    color: '#7f8c8d',
-    flex: 1,
-  },
-  noEventsText: {
-    fontSize: 16,
+  listItemLocation: {
+    fontSize: 13,
     color: '#666',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginTop: 20,
+  },
+  listItemDate: {
+    fontSize: 13,
+    color: '#666',
+  },
+  listItemDescription: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 5,
   },
 });
