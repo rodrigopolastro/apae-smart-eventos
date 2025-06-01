@@ -1,13 +1,20 @@
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const { width } = Dimensions.get('window');
 
 // Dados mockados dos ingressos do usuário
 const userTickets = [
@@ -21,7 +28,8 @@ const userTickets = [
     type: 'VIP',
     price: 250.00,
     qrCode: 'https://example.com/qrcode1.pdf',
-    purchaseDate: '10/05/2025'
+    purchaseDate: '10/05/2025',
+    category: 'Tecnologia'
   },
   {
     id: 't2',
@@ -33,7 +41,8 @@ const userTickets = [
     type: 'Normal',
     price: 120.00,
     qrCode: 'https://example.com/qrcode2.pdf',
-    purchaseDate: '10/05/2025'
+    purchaseDate: '10/05/2025',
+    category: 'Tecnologia'
   },
   {
     id: 't3',
@@ -45,7 +54,8 @@ const userTickets = [
     type: 'Meia',
     price: 60.00,
     qrCode: 'https://example.com/qrcode3.pdf',
-    purchaseDate: '20/05/2025'
+    purchaseDate: '20/05/2025',
+    category: 'Cultural'
   },
   {
     id: 't4',
@@ -57,7 +67,8 @@ const userTickets = [
     type: 'Normal',
     price: 120.00,
     qrCode: 'https://example.com/qrcode4.pdf',
-    purchaseDate: '01/06/2025'
+    purchaseDate: '01/06/2025',
+    category: 'Tech'
   }
 ];
 
@@ -73,114 +84,228 @@ export default function MyTicketsScreen() {
   };
 
   const handleViewQRCode = (ticketId: string) => {
-    // Em uma implementação real, isso abriria o visualizador de PDF
     const ticket = userTickets.find(t => t.id === ticketId);
     alert(`Abrindo QRCode para ingresso ${ticketId}\nEvento: ${ticket?.eventName}\nURL: ${ticket?.qrCode}`);
   };
 
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: string } = {
+      'Música': '#FF6B6B',
+      'Festival': '#4ECDC4',
+      'Cultural': '#45B7D1',
+      'Tecnologia': '#96CEB4',
+      'Tech': '#FECA57'
+    };
+    return colors[category] || '#DDA0DD';
+  };
+
+  const getTicketTypeColor = (type: string) => {
+    const colors: { [key: string]: string } = {
+      'VIP': '#FF9500',
+      'Normal': '#007AFF',
+      'Meia': '#34C759'
+    };
+    return colors[type] || '#007AFF';
+  };
+
+  const totalValue = userTickets.reduce((sum, ticket) => sum + ticket.price, 0);
+
   return (
-    <ThemedView style={styles.mainContainer}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Top Bar / Header */}
-        <LinearGradient
-          colors={['#007AFF', '#5DADE2']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.topBar}
-        >
-          <ThemedView style={styles.headerContent}>
-            <TouchableOpacity onPress={handleBackPress}>
-            <Ionicons name="chevron-back" size={24} color="white" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      
+      {/* Header com gradiente - mesmo estilo do HomeScreen */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <SafeAreaView style={styles.headerContent}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+              <Ionicons name="chevron-back" size={24} color="white" />
             </TouchableOpacity>
-            <ThemedText style={styles.headerTitle}>Meus Ingressos</ThemedText>
-            <View style={{ width: 24 }} />
-          </ThemedView>
-        </LinearGradient>
+            <Text style={styles.headerTitle}>Meus Ingressos</Text>
+            <View style={styles.placeholder} />
+          </View>
+          
+          {/* Resumo no header */}
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryTitle}>🎫 {userTickets.length} Ingressos</Text>
+            <Text style={styles.summarySubtitle}>
+              Total investido: {totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
-        {/* Content Area */}
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Resumo */}
-          <ThemedView style={styles.summaryCard}>
-            <ThemedText style={styles.summaryTitle}>Você possui {userTickets.length} ingressos</ThemedText>
-            <ThemedText style={styles.summarySubtitle}>Toque em um ingresso para ver detalhes</ThemedText>
-          </ThemedView>
+      {/* Corpo principal */}
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        {/* Badge de status */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.badgeContainer}>
+            <LinearGradient
+              colors={['#4CAF50', '#8BC34A']}
+              style={styles.badge}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={styles.badgeText}>✅ Ingressos Ativos</Text>
+            </LinearGradient>
+          </View>
+          <Text style={styles.sectionSubtitle}>Toque para ver detalhes ou QR Code</Text>
+        </View>
 
-          {/* Lista de Ingressos */}
-          {userTickets.map(ticket => (
-            <ThemedView key={ticket.id} style={styles.ticketCard}>
-              <TouchableOpacity 
-                style={styles.ticketHeader}
-                onPress={() => handleViewEvent(ticket.eventId)}
-              >
-                <Image source={ticket.eventImage} style={styles.eventImage} />
-                <ThemedView style={styles.eventInfo}>
-                  <ThemedText style={styles.eventName}>{ticket.eventName}</ThemedText>
-                  <ThemedText style={styles.eventDetails}>{ticket.eventDate}</ThemedText>
-                  <ThemedText style={styles.eventDetails}>{ticket.eventLocation}</ThemedText>
-                </ThemedView>
-              </TouchableOpacity>
-
-              <ThemedView style={styles.ticketDetails}>
-                <ThemedView style={styles.ticketTypeContainer}>
-                  <ThemedText style={styles.ticketTypeLabel}>Tipo:</ThemedText>
-                  <ThemedText style={[
-                    styles.ticketTypeValue,
-                    ticket.type === 'VIP' && styles.vipType,
-                    ticket.type === 'Meia' && styles.meiaType
-                  ]}>
+        {/* Lista de Ingressos - estilo similar aos eventos */}
+        <View style={styles.ticketsSection}>
+          {userTickets.map((ticket, index) => (
+            <TouchableOpacity 
+              key={ticket.id}
+              style={styles.ticketCard}
+              onPress={() => handleViewEvent(ticket.eventId)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.cardImageContainer}>
+                <Image source={ticket.eventImage} style={styles.ticketImage} />
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.7)']}
+                  style={styles.imageOverlay}
+                />
+                
+                {/* Badge da categoria */}
+                <View style={styles.categoryBadge}>
+                  <Text style={[styles.categoryText, { backgroundColor: getCategoryColor(ticket.category) }]}>
+                    {ticket.category}
+                  </Text>
+                </View>
+                
+                {/* Badge do tipo de ingresso */}
+                <View style={styles.ticketTypeBadge}>
+                  <Text style={[styles.ticketTypeText, { backgroundColor: getTicketTypeColor(ticket.type) }]}>
                     {ticket.type}
-                  </ThemedText>
-                </ThemedView>
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.cardContent}>
+                <Text style={styles.eventTitle} numberOfLines={2}>
+                  {ticket.eventName}
+                </Text>
+                
+                <View style={styles.eventDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailIcon}>📍</Text>
+                    <Text style={styles.detailText} numberOfLines={1}>
+                      {ticket.eventLocation}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailIcon}>📅</Text>
+                    <Text style={styles.detailText}>
+                      {ticket.eventDate}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailIcon}>💰</Text>
+                    <Text style={styles.detailText}>
+                      {ticket.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailIcon}>🛒</Text>
+                    <Text style={styles.detailText}>
+                      Comprado em {ticket.purchaseDate}
+                    </Text>
+                  </View>
+                </View>
 
-                <ThemedView style={styles.ticketInfoRow}>
-                  <ThemedText style={styles.ticketInfoLabel}>Valor:</ThemedText>
-                  <ThemedText style={styles.ticketInfoValue}>
-                    {ticket.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </ThemedText>
-                </ThemedView>
-
-                <ThemedView style={styles.ticketInfoRow}>
-                  <ThemedText style={styles.ticketInfoLabel}>Comprado em:</ThemedText>
-                  <ThemedText style={styles.ticketInfoValue}>{ticket.purchaseDate}</ThemedText>
-                </ThemedView>
-
+                {/* Botão QR Code */}
                 <TouchableOpacity 
                   style={styles.qrCodeButton}
                   onPress={() => handleViewQRCode(ticket.id)}
                 >
-                  <IconSymbol name="qrcode" size={20} color="#007AFF" />
-                  <ThemedText style={styles.qrCodeButtonText}>Visualizar QRCode</ThemedText>
+                  <LinearGradient
+                    colors={['#667eea', '#764ba2']}
+                    style={styles.qrCodeGradient}
+                  >
+                    <Ionicons name="qr-code" size={20} color="#fff" />
+                    <Text style={styles.qrCodeButtonText}>Ver QR Code</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
-              </ThemedView>
-            </ThemedView>
+              </View>
+            </TouchableOpacity>
           ))}
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+        </View>
+
+        {/* Seção de ações rápidas - mesmo estilo do HomeScreen */}
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.quickActionsTitle}>Ações Rápidas</Text>
+          <View style={styles.quickActionsContainer}>
+            <TouchableOpacity style={styles.quickActionButton}>
+              <LinearGradient
+                colors={['#ff9a9e', '#fecfef']}
+                style={styles.quickActionGradient}
+              >
+                <Text style={styles.quickActionIcon}>📧</Text>
+                <Text style={styles.quickActionText}>Reenviar Email</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.quickActionButton}>
+              <LinearGradient
+                colors={['#a8edea', '#fed6e3']}
+                style={styles.quickActionGradient}
+              >
+                <Text style={styles.quickActionIcon}>📱</Text>
+                <Text style={styles.quickActionText}>Compartilhar</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.quickActionButton}>
+              <LinearGradient
+                colors={['#ffd89b', '#19547b']}
+                style={styles.quickActionGradient}
+              >
+                <Text style={styles.quickActionIcon}>📄</Text>
+                <Text style={styles.quickActionText}>Suporte</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  mainContainer: {
+  container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  topBar: {
-    width: '100%',
-    height: 80,
-    justifyContent: 'flex-end',
-    paddingBottom: 10,
-    paddingHorizontal: 20,
+  header: {
+    paddingTop: StatusBar.currentHeight || 0,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   headerContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerTop: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  backButton: {
+    padding: 5,
   },
   headerTitle: {
     fontSize: 20,
@@ -189,118 +314,201 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+  placeholder: {
+    width: 34,
   },
-  summaryCard: {
-    backgroundColor: '#F7F7F7',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+  summaryContainer: {
     alignItems: 'center',
   },
   summaryTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#1C1C1E',
+    color: '#fff',
+    marginBottom: 4,
   },
   summarySubtitle: {
-    fontSize: 14,
-    color: '#636366',
-    marginTop: 4,
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  body: {
+    flex: 1,
+    paddingTop: 20,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    marginBottom: 25,
+    paddingHorizontal: 20,
+  },
+  badgeContainer: {
+    marginBottom: 8,
+  },
+  badge: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  badgeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  ticketsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   ticketCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 20,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
     overflow: 'hidden',
   },
-  ticketHeader: {
-    flexDirection: 'row',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+  cardImageContainer: {
+    position: 'relative',
+    height: 180,
   },
-  eventImage: {
-    width: 80,
+  ticketImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     height: 80,
-    borderRadius: 8,
   },
-  eventInfo: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: 'center',
+  categoryBadge: {
+    position: 'absolute',
+    top: 15,
+    left: 15,
   },
-  eventName: {
-    fontSize: 16,
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  ticketTypeBadge: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+  },
+  ticketTypeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  cardContent: {
+    padding: 20,
+  },
+  eventTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1C1C1E',
-    marginBottom: 4,
+    color: '#2c3e50',
+    marginBottom: 12,
+    lineHeight: 24,
   },
   eventDetails: {
-    fontSize: 14,
-    color: '#636366',
+    gap: 8,
+    marginBottom: 16,
   },
-  ticketDetails: {
-    padding: 16,
-  },
-  ticketTypeContainer: {
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  ticketTypeLabel: {
-    fontSize: 16,
-    color: '#636366',
+  detailIcon: {
+    fontSize: 14,
     marginRight: 8,
+    width: 20,
   },
-  ticketTypeValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#E5F0FF',
-  },
-  vipType: {
-    color: '#FF9500',
-    backgroundColor: '#FFF4E5',
-  },
-  meiaType: {
-    color: '#34C759',
-    backgroundColor: '#E5F9ED',
-  },
-  ticketInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  ticketInfoLabel: {
+  detailText: {
     fontSize: 14,
-    color: '#636366',
-  },
-  ticketInfoValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1C1C1E',
+    color: '#7f8c8d',
+    flex: 1,
   },
   qrCodeButton: {
+    borderRadius: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  qrCodeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E5F0FF',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
   },
   qrCodeButtonText: {
-    color: '#007AFF',
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  quickActionsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 30,
+  },
+  quickActionsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 15,
+  },
+  quickActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  quickActionButton: {
+    flex: 1,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  quickActionGradient: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  quickActionIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
   },
 });
