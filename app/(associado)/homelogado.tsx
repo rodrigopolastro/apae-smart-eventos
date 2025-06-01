@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useRef, useState } from 'react';
-import CustomHeader from '@/components/CustomHeader'; // Importa o novo componente de cabeçalho
+import CustomHeader from '@/components/CustomHeaderIn'; // Importa o novo componente de cabeçalho
 
 const { width } = Dimensions.get('window');
 
@@ -175,8 +175,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    //backgroundColor:'rgb(233, 252, 250)', // Cor de fundo principal
-    backgroundColor: '#ADD8E6',
+    backgroundColor:'#ADD8E6', // Cor de fundo principal
   },
   safeArea: {
     flex: 1,
@@ -205,7 +204,6 @@ const styles = StyleSheet.create({
     // Removido position: 'absolute' e zIndex daqui, pois ele está no fluxo do ScrollView
     // Removido paddingTop, pois o CustomHeader já gerencia seu próprio espaço
     backgroundColor: 'transparent',
-    
   },
   eventsApaeContainer: {
     backgroundColor: 'transparent',
@@ -236,10 +234,16 @@ const styles = StyleSheet.create({
     //borderRadius:20,
     padding: 10,
     height:300,
-    backgroundColor: '#fff'
+   // paddingTop:25,
    // backgroundColor: '#48a3a7',
-  // backgroundColor: 'rgb(233, 252, 250)',
-
+   //backgroundColor: 'rgb(233, 252, 250)',
+   backgroundColor: '#ADD8E6'
+   
+    // shadowColor: '#000', // Cor da sombra preta
+    // shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo
+    // shadowOpacity: 1, // Opacidade aumentada para 40%
+    // shadowRadius: 10, // Raio de desfoque maior
+    // elevation: 10, // Propriedade específica para Android, aumentada
     
   },
   carouselScrollView: {
