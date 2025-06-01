@@ -64,8 +64,8 @@ export default function HomeScreen() {
     },
   ];
 
-  const handleLoginPress = () => {
-    router.push('/login');
+  const handleIngressoPress = () => {
+    router.push('/meuingresso');
   };
 
   const handleEventPress = (eventId: string) => {
@@ -103,7 +103,7 @@ export default function HomeScreen() {
           contentContainerStyle={styles.scrollContentContainer}
         >
           {/* O novo componente de cabeçalho, agora rolável */}
-          <CustomHeader onLoginPress={handleLoginPress} />
+          <CustomHeader onPress={handleIngressoPress} />
 
           {/* Corpo principal com azul mais claro - Agora dentro do ScrollView */}
           {/* Este ThemedView atua como o 'bodyContainer' do fluxo anterior,
@@ -175,7 +175,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor:'#ADD8E6', // Cor de fundo principal
+    //backgroundColor:'#ADD8E6', // Cor de fundo principal
+    backgroundColor: '#fff'
   },
   safeArea: {
     flex: 1,
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
    // paddingTop:25,
    // backgroundColor: '#48a3a7',
    //backgroundColor: 'rgb(233, 252, 250)',
-   backgroundColor: '#ADD8E6'
+   backgroundColor: 'transparent'
    
     // shadowColor: '#000', // Cor da sombra preta
     // shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo

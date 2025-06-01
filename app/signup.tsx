@@ -176,7 +176,7 @@ export default function SignUp() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ADD8E6', // Cor de fundo principal da tela
+    backgroundColor: '#fff', // Cor de fundo principal da tela
   },
   safeArea: {
     flex: 1,

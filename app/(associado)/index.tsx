@@ -175,7 +175,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor:'#ADD8E6', // Cor de fundo principal
+    //backgroundColor:'#ADD8E6', // Cor de fundo principal
+    backgroundColor: '#fff'
   },
   safeArea: {
     flex: 1,
@@ -237,7 +238,8 @@ const styles = StyleSheet.create({
    // paddingTop:25,
    // backgroundColor: '#48a3a7',
    //backgroundColor: 'rgb(233, 252, 250)',
-   backgroundColor: '#ADD8E6'
+   //backgroundColor: '#ADD8E6'
+   backgroundColor:'transparent'
    
     // shadowColor: '#000', // Cor da sombra preta
     // shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo
@@ -273,7 +275,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   eventCardTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     paddingHorizontal: 15,
     paddingTop: 10,

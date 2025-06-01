@@ -175,8 +175,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    //backgroundColor:'rgb(233, 252, 250)', // Cor de fundo principal
-    backgroundColor: '#ADD8E6',
+    //backgroundColor:'#ADD8E6', // Cor de fundo principal
+    backgroundColor: '#fff'
   },
   safeArea: {
     flex: 1,
@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
     // Removido position: 'absolute' e zIndex daqui, pois ele está no fluxo do ScrollView
     // Removido paddingTop, pois o CustomHeader já gerencia seu próprio espaço
     backgroundColor: 'transparent',
-    
   },
   eventsApaeContainer: {
     backgroundColor: 'transparent',
@@ -236,10 +235,17 @@ const styles = StyleSheet.create({
     //borderRadius:20,
     padding: 10,
     height:300,
-    backgroundColor: '#fff'
+   // paddingTop:25,
    // backgroundColor: '#48a3a7',
-  // backgroundColor: 'rgb(233, 252, 250)',
-
+   //backgroundColor: 'rgb(233, 252, 250)',
+   //backgroundColor: '#ADD8E6'
+   backgroundColor:'transparent'
+   
+    // shadowColor: '#000', // Cor da sombra preta
+    // shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo
+    // shadowOpacity: 1, // Opacidade aumentada para 40%
+    // shadowRadius: 10, // Raio de desfoque maior
+    // elevation: 10, // Propriedade específica para Android, aumentada
     
   },
   carouselScrollView: {
@@ -269,7 +275,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   eventCardTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     paddingHorizontal: 15,
     paddingTop: 10,

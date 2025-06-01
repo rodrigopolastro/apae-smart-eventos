@@ -3,22 +3,22 @@ import { StyleSheet, TouchableOpacity, Dimensions, Image, View, Text } from 'rea
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
-import MaterialIcons from '@react-native-vector-icons/material-icons';
+
 
 const { width } = Dimensions.get('window');
 
 interface CustomHeaderProps {
-  onLoginPress?: () => void;
+  onPress?: () => void;
 }
 
-export default function CustomHeader({ onLoginPress }: CustomHeaderProps) {
+export default function CustomHeader({ onPress }: CustomHeaderProps) {
   const router = useRouter();
 
-  const handleLogin = () => {
-    if (onLoginPress) {
-      onLoginPress();
+  const handleIngresso = () => {
+    if (onPress) {
+      onPress();
     } else {
-      router.push('/login');
+      router.push('/meuingresso');
     }
   };
 
@@ -34,8 +34,8 @@ export default function CustomHeader({ onLoginPress }: CustomHeaderProps) {
         end={{ x: 1, y: 0 }}
         style={styles.topBar}
       >
-        <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-          <ThemedText style={styles.loginButtonText}>Meus Ingressos</ThemedText>
+        <TouchableOpacity onPress={handleIngresso} style={styles.ingressoButton}>
+          <ThemedText style={styles.ingressoButtonText}>Meus Ingressos</ThemedText>
         </TouchableOpacity>
       </LinearGradient>
 
@@ -85,8 +85,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
 
   },
-  loginButton: {
-    backgroundColor: '#00527c',
+  ingressoButton: {
+    //backgroundColor: '#00527c',
+    backgroundColor: 'transparent',
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 15,
@@ -101,10 +102,10 @@ const styles = StyleSheet.create({
     borderColor: '#48a3a7',
     
   },
-  loginButtonText: {
+  ingressoButtonText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#000',
+    //color: '#000',
   },
   centerLogo: {
     width: 130,
