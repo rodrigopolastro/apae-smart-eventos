@@ -109,7 +109,7 @@ export default function HomeScreen() {
           {/* Este ThemedView atua como o 'bodyContainer' do fluxo anterior,
               mas agora ele começa logo após o CustomHeader */}
           <ThemedView style={styles.bodyContentWrapper}>
-            {/* Texto "Eventos APAE" com fundo amarelo */}
+           
             <ThemedView style={styles.eventsApaeContainer}>
               <ThemedText style={styles.eventsApaeText}>Principais Eventos do Mês</ThemedText>
             </ThemedView>

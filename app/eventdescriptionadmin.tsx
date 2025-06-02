@@ -8,7 +8,7 @@ import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Importe o CustomHeader
-import CustomHeader from '../components/CustomHeader'; // Ajuste este caminho conforme sua estrutura de pastas
+import CustomHeader from '../components/CustomHeaderLogin'; // Ajuste este caminho conforme sua estrutura de pastas
 
 export default function EventDescriptionScreen() {
   const router = useRouter();
@@ -128,14 +128,16 @@ export default function EventDescriptionScreen() {
 
             {/* Botões de Ação */}
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.primaryButton]}
-                onPress={handleAcquireTicket}
-              >
-                <ThemedText style={styles.buttonText}>Adquirir Ingresso</ThemedText>
-              </TouchableOpacity>
+          
               
-      
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.secondaryButton]}
+                onPress={toggleAdminDetails}
+              >
+                <ThemedText style={styles.buttonText}>
+                  {showAdminDetails ? 'Ocultar Admin' : 'Detalhes Admin'}
+                </ThemedText>
+              </TouchableOpacity>
             </View>
 
             {/* Conteúdo Dinâmico */}

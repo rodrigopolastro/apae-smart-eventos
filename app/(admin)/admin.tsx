@@ -106,7 +106,7 @@ export default function AdminScreen() {
 
   const handleEventPress = (eventId: string) => {
     router.push({ 
-      pathname: '/eventdescription', 
+      pathname: '/eventdescriptionadmin', 
       params: { eventId } 
     });
   };

@@ -1,13 +1,11 @@
 import { ThemedView } from '@/components/ThemedView';
-import { AntDesign } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
-import { Alert, Button, Modal, StyleSheet, Text, View } from 'react-native';
+import { Alert, Button, Modal, StyleSheet, View } from 'react-native';
 
 export default function ReadQrCode() {
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const [validationVisible, setValidationVisible] = useState(false);
   const qrCodeLock = useRef(false);
 
   async function handleOpenCamera() {
@@ -25,16 +23,8 @@ export default function ReadQrCode() {
   }
 
   function handleQRCodeRead(data: string) {
-    qrCodeLock.current = true;
     setModalIsVisible(false);
-    setValidationVisible(true);
-    
-    // Esconde a validação após 3 segundos
-    setTimeout(() => {
-      setValidationVisible(false);
-      qrCodeLock.current = false;
-    }, 3000);
-    
+    Alert.alert('QRCode', data);
     console.log(data);
   }
 
@@ -42,7 +32,7 @@ export default function ReadQrCode() {
     <ThemedView style={styles.container}>
       <Button title='Ler QRCode' onPress={handleOpenCamera} />
 
-      <Modal visible={modalIsVisible} transparent={false} animationType="slide">
+      <Modal visible={modalIsVisible} style={{ flex: 1 }}>
         <CameraView
           style={{ flex: 1 }}
           facing='back'
@@ -57,21 +47,6 @@ export default function ReadQrCode() {
           <Button title='Cancelar' onPress={() => setModalIsVisible(false)} />
         </View>
       </Modal>
-
-      {/* Modal de validação */}
-      <Modal
-        visible={validationVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setValidationVisible(false)}
-      >
-        <View style={styles.validationContainer}>
-          <View style={styles.validationContent}>
-            <AntDesign name="checkcircle" size={80} color="#4CAF50" />
-            <Text style={styles.validationText}>Ingresso validado</Text>
-          </View>
-        </View>
-      </Modal>
     </ThemedView>
   );
 }
@@ -82,36 +57,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  footer: {
-    position: 'absolute',
-    bottom: 20,
-    width: '100%',
-    alignItems: 'center',
-  },
-  validationContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  validationContent: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  validationText: {
-    marginTop: 15,
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
+  footer: {},
 });
