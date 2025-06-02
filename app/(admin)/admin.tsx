@@ -1,13 +1,16 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, AntDesign  } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native'; // Adicionado TextInput para o modal
+import { Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native';
 
-// Importe o CustomHeader
-import CustomHeader from '../../components/CustomHeader'; // Ajuste este caminho conforme sua estrutura de pastas
+// Importe o CustomHeader (mantenha se você usa)
+import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste este caminho
 
-// Dados dos eventos
+// Importe o novo componente de scanner
+import ReadQRCode from '../../components/ReadQRCode'; // Ajuste este caminho
+
+// Dados dos eventos (mantidos iguais)
 const initialEvents = [
   {
     id: '1',
@@ -56,6 +59,8 @@ export default function AdminScreen() {
     date: '',
     location: '',
   });
+  const [isScannerVisible, setIsScannerVisible] = useState(false); // Novo estado para controlar o scanner
+  const [validationVisible, setValidationVisible] = useState(false); // Para o modal de validação
 
   const handleInputChange = (name: string, value: string) => {
     setEventData({
@@ -69,7 +74,7 @@ export default function AdminScreen() {
       id: String(events.length + 1),
       title: eventData.title,
       details: `${eventData.location} | ${eventData.date}`,
-      image: require('../../assets/images/festajunina.jpg'), // Você pode adicionar uma lógica para escolher a imagem
+      image: require('../../assets/images/festajunina.jpg'),
       status: 'ativo'
     };
     
@@ -99,7 +104,6 @@ export default function AdminScreen() {
     setEvents(events.filter(event => event.id !== id));
   };
 
-  // Função para navegar para a tela de descrição do evento
   const handleEventPress = (eventId: string) => {
     router.push({ 
       pathname: '/eventdescription', 
@@ -107,15 +111,28 @@ export default function AdminScreen() {
     });
   };
 
+  // Função para lidar com a leitura do QR Code vinda do componente
+  const handleQrCodeRead = (qrCodeData: string) => {
+    console.log("QR Code Lido na AdminScreen:", qrCodeData);
+    setIsScannerVisible(false); // Fechar o scanner
+    setValidationVisible(true); // Mostrar o modal de validação
+
+    // Esconde a validação após 3 segundos
+    setTimeout(() => {
+      setValidationVisible(false);
+    }, 3000);
+
+    // Aqui você pode adicionar sua lógica para validar o ingresso com qrCodeData
+    // Por exemplo, fazer uma requisição API.
+  };
+
   return (
     <View style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Content Area */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Adicione o CustomHeader aqui */}
+          {/* Adicione o CustomHeader aqui (se estiver usando) */}
           <CustomHeader /> 
 
-          {/* Wrapper para o restante do conteúdo com paddingTop e paddingHorizontal */}
           <View style={styles.adminContentWrapper}>
             <Text style={styles.sectionTitle}>Gerenciamento de Eventos</Text>
             
@@ -126,6 +143,22 @@ export default function AdminScreen() {
             >
               <Ionicons name="add-circle" size={24} color="white" />
               <Text style={styles.createButtonText}>Criar Novo Evento</Text>
+            </TouchableOpacity>
+
+            {/* BOTÃO: Ler QR Code (que agora abre o componente local) */}
+            <TouchableOpacity 
+              style={styles.qrCodeButton} 
+              onPress={() => setIsScannerVisible(true)} // Apenas define a visibilidade
+            >
+              <LinearGradient
+                colors={['#4CAF50', '#8BC34A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.qrCodeButtonGradient}
+              >
+                <Ionicons name="qr-code-outline" size={24} color="white" />
+                <Text style={styles.qrCodeButtonText}>Ler QR Code</Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             {/* Lista de Eventos */}
@@ -189,7 +222,7 @@ export default function AdminScreen() {
           </View>
         </ScrollView>
 
-        {/* Modal do Formulário */}
+        {/* Modal do Formulário (mantido igual) */}
         <Modal
           animationType="slide"
           transparent={false}
@@ -201,7 +234,7 @@ export default function AdminScreen() {
               colors={['#007AFF', '#5DADE2']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.modalHeader} // Adicionado estilo de header para o modal
+              style={styles.modalHeader}
             >
               <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
                 <Ionicons name="close" size={28} color="white" />
@@ -252,12 +285,35 @@ export default function AdminScreen() {
             </ScrollView>
           </SafeAreaView>
         </Modal>
+
+        {/* Modal de validação (AGORA NA ADMINSCREEN, USANDO ANTDESIGN) */}
+        <Modal
+            visible={validationVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setValidationVisible(false)}
+        >
+            <View style={styles.validationContainer}>
+                <View style={styles.validationContent}>
+                    <AntDesign name="checkcircle" size={80} color="#4CAF50" />
+                    <Text style={styles.validationText}>Ingresso validado</Text>
+                </View>
+            </View>
+        </Modal>
+
+        {/* O Componente Scanner de QR Code */}
+        <ReadQRCode
+            isVisible={isScannerVisible}
+            onClose={() => setIsScannerVisible(false)}
+            onQRCodeRead={handleQrCodeRead}
+        />
+
       </SafeAreaView>
     </View>
   );
 }
 
-// Estilos
+// Estilos (mantidos e adicionados os novos)
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
@@ -267,15 +323,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  // Ajuste para o padding do conteúdo principal após o cabeçalho
   scrollContent: {
     paddingBottom: 40,
-    // Removido paddingHorizontal para que o adminContentWrapper controle
   },
-  // Novo estilo para o wrapper do conteúdo do administrador
   adminContentWrapper: {
-    paddingHorizontal: 20, // Adiciona padding horizontal para o conteúdo
-    paddingTop: 75, // Empurra o conteúdo para baixo do cabeçalho
+    paddingHorizontal: 20,
+    paddingTop: 75,
   },
   sectionTitle: {
     fontSize: 24,
@@ -291,13 +344,39 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 15,
   },
   createButtonText: {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
   },
+  // ESTILOS PARA O BOTÃO QR CODE
+  qrCodeButton: {
+    width: '100%',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  qrCodeButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 10,
+    gap: 10,
+  },
+  qrCodeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  // CONTINUAÇÃO DOS ESTILOS
   formContent: {
     padding: 20,
   },
@@ -409,24 +488,50 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: 5,
   },
-  // Novos estilos para o modal header
   modalHeader: {
     width: '100%',
-    height: 80, // Ajuste a altura conforme necessário
-    justifyContent: 'center', // Centraliza verticalmente o conteúdo
-    alignItems: 'center', // Centraliza horizontalmente o conteúdo
-    paddingTop: 20, // Espaçamento para não colidir com a status bar
-    flexDirection: 'row', // Para alinhar o botão de fechar e o título
-    position: 'relative', // Para posicionar o botão de fechar
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 20,
+    flexDirection: 'row',
+    position: 'relative',
   },
   modalCloseButton: {
     position: 'absolute',
     left: 20,
-    top: 35, // Ajuste conforme necessário
+    top: 35,
     zIndex: 1,
   },
   modalHeaderText: {
     color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  // ESTILOS PARA O MODAL DE VALIDAÇÃO (MOVIDOS PARA ADMINSCREEN)
+  validationContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  validationContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  validationText: {
+    marginTop: 15,
+    textAlign: 'center',
     fontSize: 20,
     fontWeight: 'bold',
   },
