@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 3. Para produção: Será o domínio do seu servidor (ex: 'https://api.seusmarteventos.com').
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: 'http://34.151.200.231:3000',
   timeout: 10000, // Tempo limite da requisição (10 segundos)
   headers: {
     'Content-Type': 'application/json',
