@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
     // Removido marginBottom: -75, pois o cabeçalho agora rola com o conteúdo
     overflow: 'visible',
   },
+
   topBar: {
     width: width - 20, // Largura da tela menos 20px de margem de cada lado
     height: 150, // Altura da topBar
@@ -83,8 +84,8 @@ const styles = StyleSheet.create({
     elevation: 20, // Propriedade específica para Android, aumentada
     overflow: 'visible',
     backgroundColor: 'transparent',
-
   },
+
   loginButton: {
     backgroundColor: '#00527c',
     paddingVertical: 8,
@@ -99,13 +100,14 @@ const styles = StyleSheet.create({
     elevation: 20, // Propriedade específica para Android, aumentada
     borderWidth: 2, // Define a largura da borda
     borderColor: '#48a3a7',
-    
   },
+
   loginButtonText: {
     fontSize: 10,
     fontWeight: 'bold',
     color: '#000',
   },
+
   centerLogo: {
     width: 130,
     height: 130,
@@ -126,6 +128,4 @@ const styles = StyleSheet.create({
     borderColor: '#48a3a7',
    //borderColor: 'yellow'
   },
-
-
 });

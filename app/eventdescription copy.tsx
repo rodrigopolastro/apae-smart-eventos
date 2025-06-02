@@ -7,9 +7,6 @@ import React, { useEffect, useState } from 'react';
 import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Importe o CustomHeader
-import CustomHeader from '../components/CustomHeader'; // Ajuste este caminho conforme sua estrutura de pastas
-
 export default function EventDescriptionScreen() {
   const router = useRouter();
   const { eventId } = useLocalSearchParams();
@@ -111,107 +108,117 @@ export default function EventDescriptionScreen() {
   return (
     <ThemedView style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
+        {/* Cabeçalho */}
+        <LinearGradient
+          colors={['#007AFF', '#5DADE2']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.topBar}
+        >
+          <ThemedView style={styles.headerContent}>
+            <TouchableOpacity onPress={handleGoBack}>
+              <Ionicons name="chevron-back" size={24} color="white" />
+            </TouchableOpacity>
+            <ThemedText style={styles.headerTitle}>Detalhes do Evento</ThemedText>
+            <View style={{ width: 24 }} />
+          </ThemedView>
+        </LinearGradient>
+
         {/* Conteúdo Principal */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Adicione o CustomHeader aqui */}
-          <CustomHeader /> 
+          {/* Imagem e informações básicas */}
+          <Image source={eventDetails.image} style={styles.eventImage} />
+          <ThemedText style={styles.eventTitle}>{eventDetails.title}</ThemedText>
+          <ThemedText style={styles.eventDateLocation}>{eventDetails.fullDate}</ThemedText>
+          <ThemedText style={styles.eventDateLocation}>{eventDetails.location}</ThemedText>
 
-          {/* Wrapper para o restante do conteúdo com paddingTop */}
-          <View style={styles.eventContentWrapper}>
-            {/* Imagem e informações básicas */}
-            <Image source={eventDetails.image} style={styles.eventImage} />
-            <ThemedText style={styles.eventTitle}>{eventDetails.title}</ThemedText>
-            <ThemedText style={styles.eventDateLocation}>{eventDetails.fullDate}</ThemedText>
-            <ThemedText style={styles.eventDateLocation}>{eventDetails.location}</ThemedText>
+          <View style={styles.divider} />
 
-            <View style={styles.divider} />
-
-            {/* Botões de Ação */}
-            <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.primaryButton]}
-                onPress={handleAcquireTicket}
-              >
-                <ThemedText style={styles.buttonText}>Adquirir Ingresso</ThemedText>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.secondaryButton]}
-                onPress={toggleAdminDetails}
-              >
-                <ThemedText style={styles.buttonText}>
-                  {showAdminDetails ? 'Ocultar Admin' : 'Detalhes Admin'}
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-
-            {/* Conteúdo Dinâmico */}
-            {showAdminDetails ? (
-              <>
-                {/* Cards Administrativos */}
-                <View style={styles.adminCardsContainer}>
-                  {/* Card Ingressos Disponíveis */}
-                  <View style={styles.adminCard}>
-                    <MaterialIcons name="confirmation-number" size={28} color="#007AFF" />
-                    <ThemedText style={styles.adminCardTitle}>Disponíveis</ThemedText>
-                    <ThemedText style={styles.adminCardValue}>
-                      {eventDetails.adminDetails.ticketsAvailable}
-                    </ThemedText>
-                    <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
-                  </View>
-
-                  {/* Card Ingressos Vendidos */}
-                  <View style={styles.adminCard}>
-                    <Ionicons name="cart" size={28} color="#34C759" />
-                    <ThemedText style={styles.adminCardTitle}>Vendidos</ThemedText>
-                    <ThemedText style={styles.adminCardValue}>
-                      {eventDetails.adminDetails.ticketsSold}
-                    </ThemedText>
-                    <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
-                  </View>
-
-                  {/* Card Presenças Confirmadas */}
-                  <View style={styles.adminCard}>
-                    <Ionicons name="people" size={28} color="#5856D6" />
-                    <ThemedText style={styles.adminCardTitle}>Presentes</ThemedText>
-                    <ThemedText style={styles.adminCardValue}>
-                      {eventDetails.adminDetails.attendees}
-                    </ThemedText>
-                    <ThemedText style={styles.adminCardSubtitle}>Pessoas</ThemedText>
-                  </View>
-
-                  {/* Card Preço do Ingresso */}
-                  <View style={styles.adminCard}>
-                    <MaterialIcons name="attach-money" size={28} color="#FF9500" />
-                    <ThemedText style={styles.adminCardTitle}>Preço Unitário</ThemedText>
-                    <ThemedText style={styles.adminCardValue}>
-                      {formatCurrency(eventDetails.adminDetails.ticketPrice)}
-                    </ThemedText>
-                    <ThemedText style={styles.adminCardSubtitle}>Por ingresso</ThemedText>
-                  </View>
-                </View>
-
-                {/* Card de Arrecadação Total */}
-                <View style={styles.revenueCard}>
-                  <View style={styles.revenueHeader}>
-                    <Ionicons name="cash" size={32} color="#4CD964" />
-                    <ThemedText style={styles.revenueTitle}>Arrecadação Total</ThemedText>
-                  </View>
-                  <ThemedText style={styles.revenueValue}>
-                    {formatCurrency(eventDetails.adminDetails.revenue)}
-                  </ThemedText>
-                  <ThemedText style={styles.revenueSubtitle}>
-                    {eventDetails.adminDetails.ticketsSold} ingressos vendidos
-                  </ThemedText>
-                </View>
-              </>
-            ) : (
-              <>
-                <ThemedText style={styles.sectionTitle}>Sobre o Evento</ThemedText>
-                <ThemedText style={styles.eventDescription}>{eventDetails.description}</ThemedText>
-              </>
-            )}
+          {/* Botões de Ação */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.primaryButton]}
+              onPress={handleAcquireTicket}
+            >
+              <ThemedText style={styles.buttonText}>Adquirir Ingresso</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.secondaryButton]}
+              onPress={toggleAdminDetails}
+            >
+              <ThemedText style={styles.buttonText}>
+                {showAdminDetails ? 'Ocultar Admin' : 'Detalhes Admin'}
+              </ThemedText>
+            </TouchableOpacity>
           </View>
+
+          {/* Conteúdo Dinâmico */}
+          {showAdminDetails ? (
+            <>
+              {/* Cards Administrativos */}
+              <View style={styles.adminCardsContainer}>
+                {/* Card Ingressos Disponíveis */}
+                <View style={styles.adminCard}>
+                  <MaterialIcons name="confirmation-number" size={28} color="#007AFF" />
+                  <ThemedText style={styles.adminCardTitle}>Disponíveis</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {eventDetails.adminDetails.ticketsAvailable}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
+                </View>
+
+                {/* Card Ingressos Vendidos */}
+                <View style={styles.adminCard}>
+                  <Ionicons name="cart" size={28} color="#34C759" />
+                  <ThemedText style={styles.adminCardTitle}>Vendidos</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {eventDetails.adminDetails.ticketsSold}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
+                </View>
+
+                {/* Card Presenças Confirmadas */}
+                <View style={styles.adminCard}>
+                  <Ionicons name="people" size={28} color="#5856D6" />
+                  <ThemedText style={styles.adminCardTitle}>Presentes</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {eventDetails.adminDetails.attendees}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Pessoas</ThemedText>
+                </View>
+
+                {/* Card Preço do Ingresso */}
+                <View style={styles.adminCard}>
+                  <MaterialIcons name="attach-money" size={28} color="#FF9500" />
+                  <ThemedText style={styles.adminCardTitle}>Preço Unitário</ThemedText>
+                  <ThemedText style={styles.adminCardValue}>
+                    {formatCurrency(eventDetails.adminDetails.ticketPrice)}
+                  </ThemedText>
+                  <ThemedText style={styles.adminCardSubtitle}>Por ingresso</ThemedText>
+                </View>
+              </View>
+
+              {/* Card de Arrecadação Total */}
+              <View style={styles.revenueCard}>
+                <View style={styles.revenueHeader}>
+                  <Ionicons name="cash" size={32} color="#4CD964" />
+                  <ThemedText style={styles.revenueTitle}>Arrecadação Total</ThemedText>
+                </View>
+                <ThemedText style={styles.revenueValue}>
+                  {formatCurrency(eventDetails.adminDetails.revenue)}
+                </ThemedText>
+                <ThemedText style={styles.revenueSubtitle}>
+                  {eventDetails.adminDetails.ticketsSold} ingressos vendidos
+                </ThemedText>
+              </View>
+            </>
+          ) : (
+            <>
+              <ThemedText style={styles.sectionTitle}>Sobre o Evento</ThemedText>
+              <ThemedText style={styles.eventDescription}>{eventDetails.description}</ThemedText>
+            </>
+          )}
         </ScrollView>
 
         {/* Modal de Compra de Ingressos */}
@@ -223,14 +230,19 @@ export default function EventDescriptionScreen() {
         >
           <ThemedView style={styles.modalContainer}>
             <SafeAreaView style={styles.safeArea}>
-              {/* O header do modal pode permanecer fixo se desejar */}
               <LinearGradient
                 colors={['#007AFF', '#5DADE2']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalHeader}
               >
-                {/* Aqui você pode adicionar um botão de fechar ou título específico para o modal */}
+                <ThemedView style={styles.headerContent}>
+                  <TouchableOpacity onPress={() => setShowTicketModal(false)}>
+                    <Ionicons name="close" size={24} color="white" />
+                  </TouchableOpacity>
+                  <ThemedText style={styles.headerTitle}>Selecione os Ingressos</ThemedText>
+                  <View style={{ width: 24 }} />
+                </ThemedView>
               </LinearGradient>
 
               <ScrollView contentContainerStyle={styles.modalContent}>
@@ -378,21 +390,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
+  topBar: {
+    width: '100%',
+    height: 80,
+    justifyContent: 'flex-end',
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Ajuste para o padding do conteúdo principal após o cabeçalho
   scrollContent: {
-    // Remova o padding geral aqui, pois o padding será aplicado no eventContentWrapper
-    // paddingTop: 20, // Removido
+    padding: 20,
     paddingBottom: 40,
-  },
-  // Novo estilo para o wrapper do conteúdo do evento
-  eventContentWrapper: {
-    paddingHorizontal: 20, // Adicione padding horizontal para o conteúdo
-    paddingTop: 75, // Empurra o conteúdo para baixo do cabeçalho
   },
   eventImage: {
     width: '100%',

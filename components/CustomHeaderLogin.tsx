@@ -1,8 +1,6 @@
 import React from 'react';
-import { StyleSheet, Dimensions, Image, View, Text } from 'react-native';
+import { StyleSheet, Dimensions, Image, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
-
 
 
 const { width } = Dimensions.get('window');
@@ -48,6 +46,7 @@ const styles = StyleSheet.create({
     // Removido marginBottom: -75, pois o cabeçalho agora rola com o conteúdo
     overflow: 'visible',
   },
+
   topBar: {
     width: width - 20, // Largura da tela menos 20px de margem de cada lado
     height: 150, // Altura da topBar
@@ -68,7 +67,6 @@ const styles = StyleSheet.create({
     elevation: 20, // Propriedade específica para Android, aumentada
     overflow: 'visible',
     backgroundColor: 'transparent',
-
   },
  
   centerLogo: {
@@ -91,6 +89,4 @@ const styles = StyleSheet.create({
     borderColor: '#48a3a7',
    //borderColor: 'yellow'
   },
-
-
 });

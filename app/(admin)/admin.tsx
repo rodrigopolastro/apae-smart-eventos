@@ -2,7 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native'; // Adicionado TextInput para o modal
+
+// Importe o CustomHeader
+import CustomHeader from '../../components/CustomHeader'; // Ajuste este caminho conforme sua estrutura de pastas
 
 // Dados dos eventos
 const initialEvents = [
@@ -66,7 +69,7 @@ export default function AdminScreen() {
       id: String(events.length + 1),
       title: eventData.title,
       details: `${eventData.location} | ${eventData.date}`,
-      image: require('../../assets/images/festajunina.jpg'),
+      image: require('../../assets/images/festajunina.jpg'), // Você pode adicionar uma lógica para escolher a imagem
       status: 'ativo'
     };
     
@@ -107,101 +110,154 @@ export default function AdminScreen() {
   return (
     <View style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Top Bar / Header */}
-        <LinearGradient
-          colors={['#007AFF', '#5DADE2']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.topBar}
-        >
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={handleBackPress}>
-              <Ionicons name="chevron-back" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Painel Admin</Text>
-            <View style={{ width: 24 }} />
-          </View>
-        </LinearGradient>
-
         {/* Content Area */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.sectionTitle}>Gerenciamento de Eventos</Text>
-          
-          {/* Lista de Eventos */}
-          <Text style={styles.eventsTitle}>Eventos Cadastrados</Text>
-          
-          {events.map(event => (
+          {/* Adicione o CustomHeader aqui */}
+          <CustomHeader /> 
+
+          {/* Wrapper para o restante do conteúdo com paddingTop e paddingHorizontal */}
+          <View style={styles.adminContentWrapper}>
+            <Text style={styles.sectionTitle}>Gerenciamento de Eventos</Text>
+            
+            {/* Botão de Criar Evento */}
             <TouchableOpacity 
-              key={event.id} 
-              onPress={() => handleEventPress(event.id)}
+              style={styles.createButton} 
+              onPress={() => setModalVisible(true)}
             >
-              <View style={[
-                styles.eventCard,
-                event.status === 'inativo' && styles.inactiveEvent
-              ]}>
-                <Image source={event.image} style={styles.eventImage} />
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle}>{event.title}</Text>
-                  <View style={styles.eventDetail}>
-                    <Ionicons name="calendar" size={16} color="#666" />
-                    <Text style={styles.eventText}>{event.details}</Text>
-                  </View>
-                  <View style={styles.eventStatusContainer}>
-                    <View style={[
-                      styles.eventStatus,
-                      event.status === 'ativo' ? styles.activeStatus : styles.inactiveStatus
-                    ]}>
-                      <Text style={styles.eventStatusText}>
-                        {event.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                      </Text>
+              <Ionicons name="add-circle" size={24} color="white" />
+              <Text style={styles.createButtonText}>Criar Novo Evento</Text>
+            </TouchableOpacity>
+
+            {/* Lista de Eventos */}
+            <Text style={styles.eventsTitle}>Eventos Cadastrados</Text>
+            
+            {events.map(event => (
+              <TouchableOpacity 
+                key={event.id} 
+                onPress={() => handleEventPress(event.id)}
+              >
+                <View style={[
+                  styles.eventCard,
+                  event.status === 'inativo' && styles.inactiveEvent
+                ]}>
+                  <Image source={event.image} style={styles.eventImage} />
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle}>{event.title}</Text>
+                    <View style={styles.eventDetail}>
+                      <Ionicons name="calendar" size={16} color="#666" />
+                      <Text style={styles.eventText}>{event.details}</Text>
+                    </View>
+                    <View style={styles.eventStatusContainer}>
+                      <View style={[
+                        styles.eventStatus,
+                        event.status === 'ativo' ? styles.activeStatus : styles.inactiveStatus
+                      ]}>
+                        <Text style={styles.eventStatusText}>
+                          {event.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                        </Text>
+                      </View>
                     </View>
                   </View>
+                  
+                  <View style={styles.eventActions}>
+                    <TouchableOpacity 
+                      style={styles.actionButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleEventStatus(event.id);
+                      }}
+                    >
+                      <Ionicons 
+                        name={event.status === 'ativo' ? 'eye-off' : 'eye'} 
+                        size={20} 
+                        color="#007AFF" 
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.actionButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        deleteEvent(event.id);
+                      }}
+                    >
+                      <Ionicons name="trash" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                
-                <View style={styles.eventActions}>
-                  <TouchableOpacity 
-                    style={styles.actionButton}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      toggleEventStatus(event.id);
-                    }}
-                  >
-                    <Ionicons 
-                      name={event.status === 'ativo' ? 'eye-off' : 'eye'} 
-                      size={20} 
-                      color="#007AFF" 
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.actionButton}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      deleteEvent(event.id);
-                    }}
-                  >
-                    <Ionicons name="trash" size={20} color="#FF3B30" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            ))}
+          </View>
         </ScrollView>
 
-        {/* Modal do Formulário (mantido igual) */}
+        {/* Modal do Formulário */}
         <Modal
           animationType="slide"
           transparent={false}
           visible={modalVisible}
           onRequestClose={() => setModalVisible(false)}
         >
-          {/* ... (código do modal permanece igual) ... */}
+          <SafeAreaView style={styles.safeArea}>
+            <LinearGradient
+              colors={['#007AFF', '#5DADE2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.modalHeader} // Adicionado estilo de header para o modal
+            >
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
+                <Ionicons name="close" size={28} color="white" />
+              </TouchableOpacity>
+              <Text style={styles.modalHeaderText}>Criar Novo Evento</Text>
+            </LinearGradient>
+            <ScrollView contentContainerStyle={styles.formContent}>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Título do Evento</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nome do Evento"
+                  value={eventData.title}
+                  onChangeText={(text) => handleInputChange('title', text)}
+                />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Descrição</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Detalhes completos do evento"
+                  multiline
+                  value={eventData.description}
+                  onChangeText={(text) => handleInputChange('description', text)}
+                />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Data e Hora</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ex: 14 Out. • 13h"
+                  value={eventData.date}
+                  onChangeText={(text) => handleInputChange('date', text)}
+                />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Localização</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ex: Goiânia - GO"
+                  value={eventData.location}
+                  onChangeText={(text) => handleInputChange('location', text)}
+                />
+              </View>
+              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                <Text style={styles.submitButtonText}>Cadastrar Evento</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </SafeAreaView>
         </Modal>
       </SafeAreaView>
     </View>
   );
 }
 
-// Estilos (mantidos iguais)
+// Estilos
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
@@ -211,29 +267,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  topBar: {
-    width: '100%',
-    height: 80,
-    justifyContent: 'flex-end',
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: 'transparent',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    flex: 1,
-    textAlign: 'center',
-  },
+  // Ajuste para o padding do conteúdo principal após o cabeçalho
   scrollContent: {
-    padding: 20,
+    paddingBottom: 40,
+    // Removido paddingHorizontal para que o adminContentWrapper controle
+  },
+  // Novo estilo para o wrapper do conteúdo do administrador
+  adminContentWrapper: {
+    paddingHorizontal: 20, // Adiciona padding horizontal para o conteúdo
+    paddingTop: 75, // Empurra o conteúdo para baixo do cabeçalho
   },
   sectionTitle: {
     fontSize: 24,
@@ -366,5 +408,26 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: 5,
+  },
+  // Novos estilos para o modal header
+  modalHeader: {
+    width: '100%',
+    height: 80, // Ajuste a altura conforme necessário
+    justifyContent: 'center', // Centraliza verticalmente o conteúdo
+    alignItems: 'center', // Centraliza horizontalmente o conteúdo
+    paddingTop: 20, // Espaçamento para não colidir com a status bar
+    flexDirection: 'row', // Para alinhar o botão de fechar e o título
+    position: 'relative', // Para posicionar o botão de fechar
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    left: 20,
+    top: 35, // Ajuste conforme necessário
+    zIndex: 1,
+  },
+  modalHeaderText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
