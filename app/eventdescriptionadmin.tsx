@@ -387,7 +387,8 @@ const styles = StyleSheet.create({
   // Novo estilo para o wrapper do conteúdo do evento
   eventContentWrapper: {
     paddingHorizontal: 20, // Adicione padding horizontal para o conteúdo
-    paddingTop: 75, // Empurra o conteúdo para baixo do cabeçalho
+    paddingTop: 45, // Empurra o conteúdo para baixo do cabeçalho
+
   },
   eventImage: {
     width: '100%',

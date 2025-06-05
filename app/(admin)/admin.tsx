@@ -328,13 +328,14 @@ const styles = StyleSheet.create({
   },
   adminContentWrapper: {
     paddingHorizontal: 20,
-    paddingTop: 75,
+    paddingTop: 35,
   },
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333',
+    textAlign:"center"
   },
   createButton: {
     flexDirection: 'row',

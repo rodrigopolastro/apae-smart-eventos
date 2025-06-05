@@ -218,7 +218,7 @@ export default function EventDescriptionScreen() {
             <SafeAreaView style={styles.safeArea}>
               {/* O header do modal pode permanecer fixo se desejar */}
               <LinearGradient
-                colors={['#007AFF', '#5DADE2']}
+                colors={['#005452', '#48a3a7']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalHeader}
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   // Novo estilo para o wrapper do conteúdo do evento
   eventContentWrapper: {
     paddingHorizontal: 20, // Adicione padding horizontal para o conteúdo
-    paddingTop: 75, // Empurra o conteúdo para baixo do cabeçalho
+    paddingTop: 45, // Empurra o conteúdo para baixo do cabeçalho
   },
   eventImage: {
     width: '100%',
@@ -562,6 +562,8 @@ const styles = StyleSheet.create({
   },
   ticketInfo: {
     flex: 1,
+    borderRadius:12,
+    backgroundColor: 'transparent'
   },
   ticketType: {
     fontSize: 18,
@@ -618,10 +620,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
+    borderRadius:12,
+    backgroundColor: 'transparent'
+    
   },
   summaryText: {
     fontSize: 16,
     color: '#48484A',
+    
   },
   totalContainer: {
     flexDirection: 'row',
@@ -630,6 +636,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
+    borderRadius:12,
+    backgroundColor: 'transparent'
   },
   totalText: {
     fontSize: 18,

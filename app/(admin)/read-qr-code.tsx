@@ -35,6 +35,7 @@ export default function ReadQrCode() {
     }
     qrCodeLock.current = true; // Trava o sistema para evitar novas leituras
     setModalIsVisible(false); // Fecha o modal da câmera
+    //chama a requisicao "validateqrcode" da api e verifica se o retorno eh valido ou invalido
     Alert.alert('QR Code Lido', data, [
       {
         text: 'OK',
