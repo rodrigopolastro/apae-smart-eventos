@@ -69,7 +69,7 @@ export default function HomeScreen() {
   };
 
   const handleEventPress = (eventId: string) => {
-    router.push({ pathname: '/eventdescription', params: { eventId: eventId } });
+    router.push({ pathname: '/eventdescriptionlogado', params: { eventId: eventId } });
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
