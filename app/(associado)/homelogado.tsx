@@ -1,10 +1,19 @@
+import CustomHeader from '@/components/CustomHeaderIn'; // Importa o novo componente de cabeçalho
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useRouter } from 'expo-router';
-import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Dimensions,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useRef, useState } from 'react';
-import CustomHeader from '@/components/CustomHeaderIn'; // Importa o novo componente de cabeçalho
+import api from '../../api';
 
 const { width } = Dimensions.get('window');
 
@@ -19,50 +28,27 @@ export default function HomeScreen() {
   const cardSpacing = 10;
   const [activeIndex, setActiveIndex] = useState(0);
   const [currentScrollX, setCurrentScrollX] = useState(0);
+  const [events, setEvents] = useState<any[]>([]);
 
-  // Dados mockados para os eventos do carrossel e lista
-  const events = [
-    {
-      id: '1',
-      image: require('../../assets/images/festajunina.jpg'), // Imagem para o primeiro card (O Jardim do Inimigo)
-      title: 'O Jardim do Inimigo 25 anos',
-      location: 'Fortaleza',
-      date: '12 Set. a 13 Set.',
-      description: 'Uma peça teatral emocionante e aclamada, celebrando 25 anos de sucesso. Uma experiência única para os amantes da arte e do teatro. Não perca!',
-    },
-    {
-      id: '2',
-      image: require('../../assets/images/festajunina.jpg'), // Imagem de exemplo do ExpoEcomm
-      title: 'ExpoEcomm 2025',
-      location: 'São Paulo - SP',
-      date: '15 Ago. a 16 Ago.',
-      description: 'A maior feira de e-commerce e marketing digital do Brasil. Networking, palestras com especialistas e as últimas tendências do mercado.',
-    },
-    {
-      id: '3',
-      image: require('../../assets/images/festajunina.jpg'), // Imagem de exemplo do Submarino (Conferência de IA)
-      title: 'Conferência de IA',
-      location: 'Rio de Janeiro - RJ',
-      date: 'Quarta-feira, 20 Nov. • 10h',
-      description: 'Explore o futuro da inteligência artificial com líderes e inovadores da indústria. Palestras, workshops e demonstrações de tecnologias emergentes.',
-    },
-    {
-      id: '4',
-      image: require('../../assets/images/festajunina.jpg'), // Mantendo festajunina se existir
-      title: 'Festa Junina APAE',
-      location: 'APAE Local',
-      date: 'Terça-feira, 14 Jun. • 13h',
-      description: 'Celebre a tradicional Festa Junina da APAE com muita música, dança e comidas típicas. Um evento para toda a família e para apoiar uma causa nobre.',
-    },
-    {
-      id: '5',
-      image: require('../../assets/images/festajunina.jpg'), // Mantendo placeholder se existir
-      title: 'Conferência de Dados',
-      location: 'Belo Horizonte - MG',
-      date: 'Terça-feira, 03 Dez. • 14h',
-      description: 'Imersão no mundo dos dados, analytics e big data. Aprenda com os melhores profissionais e descubra como a análise de dados pode transformar negócios.',
-    },
-  ];
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await api.get('events/');
+        setEvents(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar eventos:', error);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const getEventCoverImage = (eventId: string): any => {
+    // TODO: usar rota de imagem na nuvem. por enquanto, retorna uma imagem padrão
+    // const imageUrl = await api.get(`events/${eventId}/imageUrl`);
+    // move isso para um hook de imagem para conseguir reaproveitar em outros lugares
+
+    return require('../../assets/images/festajunina.jpg');
+  };
 
   const handleIngressoPress = () => {
     router.push('/meuingresso');
@@ -88,7 +74,7 @@ export default function HomeScreen() {
 
   const scrollRight = () => {
     if (scrollViewRef.current) {
-      const maxScrollX = (events.length * (cardWidth + cardSpacing)) - width + cardSpacing;
+      const maxScrollX = events.length * (cardWidth + cardSpacing) - width + cardSpacing;
       const newX = Math.min(maxScrollX, currentScrollX + (cardWidth + cardSpacing));
       scrollViewRef.current.scrollTo({ x: newX, animated: true });
     }
@@ -122,44 +108,62 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.eventsCarousel}
                 snapToInterval={cardWidth + cardSpacing}
-                decelerationRate="fast"
+                decelerationRate='fast'
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
               >
-                {events.slice(0, 3).map((event, index) => ( // Mostra apenas os 3 primeiros eventos
-                  <TouchableOpacity key={event.id} style={[styles.eventCard, { marginRight: cardSpacing }]} onPress={() => handleEventPress(event.id)}>
-                    <Image source={event.image} style={styles.eventImage} />
-                    <ThemedText style={styles.eventCardTitle}>{event.title}</ThemedText>
-                    <ThemedText style={styles.eventCardLocation}>{event.location}</ThemedText>
-                    <ThemedText style={styles.eventCardDate}>{event.date}</ThemedText>
-                  </TouchableOpacity>
-                ))}
+                {events.slice(0, 3).map(
+                  (
+                    event,
+                    index // Mostra apenas os 3 primeiros eventos
+                  ) => (
+                    <TouchableOpacity
+                      key={event.id}
+                      style={[styles.eventCard, { marginRight: cardSpacing }]}
+                      onPress={() => handleEventPress(event.id)}
+                    >
+                      <Image source={getEventCoverImage(event.id)} style={styles.eventImage} />
+                      <ThemedText style={styles.eventCardTitle}>{event.name}</ThemedText>
+                      <ThemedText style={styles.eventCardLocation}>{event.location}</ThemedText>
+                      <ThemedText style={styles.eventCardDate}>{event.date_time}</ThemedText>
+                    </TouchableOpacity>
+                  )
+                )}
               </ScrollView>
             </ThemedView>
 
             {/* Pontos de Paginação */}
             <ThemedView style={styles.paginationDotsContainer}>
-              {events.slice(0, 3).map((_, index) => ( // Pontos apenas para os 3 primeiros eventos
-                <ThemedView
-                  key={index}
-                  style={[
-                    styles.paginationDot,
-                    activeIndex === index && styles.paginationDotActive,
-                  ]}
-                />
-              ))}
+              {events.slice(0, 3).map(
+                (
+                  _,
+                  index // Pontos apenas para os 3 primeiros eventos
+                ) => (
+                  <ThemedView
+                    key={index}
+                    style={[
+                      styles.paginationDot,
+                      activeIndex === index && styles.paginationDotActive,
+                    ]}
+                  />
+                )
+              )}
             </ThemedView>
 
             {/* Lista de Todos os Eventos (vertical) */}
             <ThemedView style={styles.allEventsListContainer}>
               <ThemedText style={styles.allEventsListTitle}>Todos os Eventos</ThemedText>
-              {events.map(event => (
-                <TouchableOpacity key={event.id + '-list'} style={styles.listItemCard} onPress={() => handleEventPress(event.id)}>
-                  <Image source={event.image} style={styles.listItemImage} />
+              {events.map((event) => (
+                <TouchableOpacity
+                  key={event.id + '-list'}
+                  style={styles.listItemCard}
+                  onPress={() => handleEventPress(event.id)}
+                >
+                  {/* <Image source={undefined} style={styles.listItemImage} /> */}
                   <ThemedView style={styles.listItemTextContent}>
-                    <ThemedText style={styles.listItemTitle}>{event.title}</ThemedText>
+                    <ThemedText style={styles.listItemTitle}>{event.name}</ThemedText>
                     <ThemedText style={styles.listItemLocation}>{event.location}</ThemedText>
-                    <ThemedText style={styles.listItemDate}>{event.date}</ThemedText>
+                    <ThemedText style={styles.listItemDate}>{event.date_time}</ThemedText>
                     <ThemedText style={styles.listItemDescription}>{event.description}</ThemedText>
                   </ThemedView>
                 </TouchableOpacity>
@@ -176,9 +180,9 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     //backgroundColor:'#ADD8E6', // Cor de fundo principal
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
   },
-  
+
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -199,10 +203,10 @@ const styles = StyleSheet.create({
   bodyContentWrapper: {
     width: '100%', // Ocupa a largura total do ScrollView
     //alignItems: 'center',
-   // backgroundColor: '#A0c8c3', // Cor de fundo do corpo
+    // backgroundColor: '#A0c8c3', // Cor de fundo do corpo
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    borderRadius:30,
+    borderRadius: 30,
     // Removido position: 'absolute' e zIndex daqui, pois ele está no fluxo do ScrollView
     // Removido paddingTop, pois o CustomHeader já gerencia seu próprio espaço
     backgroundColor: 'transparent',
@@ -219,7 +223,7 @@ const styles = StyleSheet.create({
 
   eventsApaeText: {
     // fontSize:22,
-    // //fontWeight: 'bold',  
+    // //fontWeight: 'bold',
     // color:'black',
     // textShadowColor: '#000', // Cor da sombra do texto (preto)
     // textShadowOffset: { width: 0, height: 0 }, // Deslocamento da sombra (2px para direita e 2px para baixo)
@@ -236,16 +240,16 @@ const styles = StyleSheet.create({
     width: '100%',
     //borderRadius:20,
     padding: 10,
-    height:300,
-   // paddingTop:25,
-   // backgroundColor: '#48a3a7',
-   //backgroundColor: 'rgb(233, 252, 250)',
-    backgroundColor: 'transparent'    
+    height: 300,
+    // paddingTop:25,
+    // backgroundColor: '#48a3a7',
+    //backgroundColor: 'rgb(233, 252, 250)',
+    backgroundColor: 'transparent',
   },
 
   carouselScrollView: {
     flex: 1,
-    paddingHorizontal: (width - (width * 0.85)) / 2,
+    paddingHorizontal: (width - width * 0.85) / 2,
   },
 
   eventsCarousel: {
@@ -257,7 +261,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     overflow: 'hidden',
-   // borderWidth: 1,
+    // borderWidth: 1,
     //borderColor: 'yellow',
     shadowColor: 'yellow', // Cor da sombra preta
     shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo
@@ -300,8 +304,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
-    borderRadius:20,
-    padding:5,
+    borderRadius: 20,
+    padding: 5,
     backgroundColor: 'transparent',
   },
 
