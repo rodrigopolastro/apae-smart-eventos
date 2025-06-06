@@ -8,7 +8,7 @@ import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Importe o CustomHeader
-import CustomHeader from '../components/CustomHeader'; // Ajuste este caminho conforme sua estrutura de pastas
+import CustomHeader from '../components/CustomHeaderLogin'; // Ajuste este caminho conforme sua estrutura de pastas
 
 export default function EventDescriptionScreen() {
   const router = useRouter();
@@ -128,14 +128,16 @@ export default function EventDescriptionScreen() {
 
             {/* Botões de Ação */}
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.primaryButton]}
-                onPress={handleAcquireTicket}
-              >
-                <ThemedText style={styles.buttonText}>Adquirir Ingresso</ThemedText>
-              </TouchableOpacity>
+          
               
-      
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.secondaryButton]}
+                onPress={toggleAdminDetails}
+              >
+                <ThemedText style={styles.buttonText}>
+                  {showAdminDetails ? 'Ocultar Admin' : 'Detalhes Admin'}
+                </ThemedText>
+              </TouchableOpacity>
             </View>
 
             {/* Conteúdo Dinâmico */}
@@ -218,7 +220,7 @@ export default function EventDescriptionScreen() {
             <SafeAreaView style={styles.safeArea}>
               {/* O header do modal pode permanecer fixo se desejar */}
               <LinearGradient
-                colors={['#005452', '#48a3a7']}
+                colors={['#007AFF', '#5DADE2']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalHeader}
@@ -386,6 +388,7 @@ const styles = StyleSheet.create({
   eventContentWrapper: {
     paddingHorizontal: 20, // Adicione padding horizontal para o conteúdo
     paddingTop: 45, // Empurra o conteúdo para baixo do cabeçalho
+
   },
   eventImage: {
     width: '100%',
@@ -562,8 +565,6 @@ const styles = StyleSheet.create({
   },
   ticketInfo: {
     flex: 1,
-    borderRadius:12,
-    backgroundColor: 'transparent'
   },
   ticketType: {
     fontSize: 18,
@@ -620,14 +621,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
-    borderRadius:12,
-    backgroundColor: 'transparent'
-    
   },
   summaryText: {
     fontSize: 16,
     color: '#48484A',
-    
   },
   totalContainer: {
     flexDirection: 'row',
@@ -636,8 +633,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
-    borderRadius:12,
-    backgroundColor: 'transparent'
   },
   totalText: {
     fontSize: 18,

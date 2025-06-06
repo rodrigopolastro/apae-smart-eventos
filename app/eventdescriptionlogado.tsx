@@ -8,7 +8,7 @@ import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Importe o CustomHeader
-import CustomHeader from '../components/CustomHeader'; // Ajuste este caminho conforme sua estrutura de pastas
+import CustomHeader from '../components/CustomHeaderIn'; // Ajuste este caminho conforme sua estrutura de pastas
 
 export default function EventDescriptionScreen() {
   const router = useRouter();

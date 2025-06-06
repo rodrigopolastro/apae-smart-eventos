@@ -116,7 +116,7 @@ export default function Login() {
 
           {/* Wrapper para o conteúdo do formulário de login */}
           <ThemedView style={styles.loginContentWrapper}>
-            <StatusBar hidden={true} /> {/* Esconde a barra de status */}
+          {/*  <StatusBar hidden={true} /> {/* Esconde a barra de status */}
             {/* O título "Login" agora está dentro do formulário */}
             <ThemedText style={styles.sectionTitle}>Login</ThemedText>
 

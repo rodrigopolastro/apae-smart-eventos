@@ -61,7 +61,7 @@ export default function SignUp() {
     setLoading(true); // Inicia o indicador de carregamento
 
     try {
-      const response = await api.post('/users', {
+      const response = await api.post('/auth/signup', {
         name,
         email,
         password,

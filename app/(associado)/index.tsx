@@ -109,7 +109,7 @@ export default function HomeScreen() {
           {/* Este ThemedView atua como o 'bodyContainer' do fluxo anterior,
               mas agora ele começa logo após o CustomHeader */}
           <ThemedView style={styles.bodyContentWrapper}>
-            {/* Texto "Eventos APAE" com fundo amarelo */}
+           
             <ThemedView style={styles.eventsApaeContainer}>
               <ThemedText style={styles.eventsApaeText}>Principais Eventos do Mês</ThemedText>
             </ThemedView>
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
     //backgroundColor:'#ADD8E6', // Cor de fundo principal
     backgroundColor: '#fff'
   },
+  
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -206,6 +207,7 @@ const styles = StyleSheet.create({
     // Removido paddingTop, pois o CustomHeader já gerencia seu próprio espaço
     backgroundColor: 'transparent',
   },
+
   eventsApaeContainer: {
     backgroundColor: 'transparent',
     paddingVertical: 5,
@@ -213,8 +215,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 3,
     marginTop: 10, // Espaçamento abaixo da área da logo
-    
   },
+
   eventsApaeText: {
     // fontSize:22,
     // //fontWeight: 'bold',  
@@ -227,8 +229,8 @@ const styles = StyleSheet.create({
     //marginBottom: 15,
     color: '#333',
     textAlign: 'left',
-    
   },
+
   carouselContainer: {
     //marginBottom: 20,
     width: '100%',
@@ -239,22 +241,18 @@ const styles = StyleSheet.create({
    // backgroundColor: '#48a3a7',
    //backgroundColor: 'rgb(233, 252, 250)',
    //backgroundColor: '#ADD8E6'
-   backgroundColor:'transparent'
-   
-    // shadowColor: '#000', // Cor da sombra preta
-    // shadowOffset: { width: 0, height: 5 }, // Deslocamento maior para baixo
-    // shadowOpacity: 1, // Opacidade aumentada para 40%
-    // shadowRadius: 10, // Raio de desfoque maior
-    // elevation: 10, // Propriedade específica para Android, aumentada
-    
+    backgroundColor:'transparent',    
   },
+
   carouselScrollView: {
     flex: 1,
     paddingHorizontal: (width - (width * 0.85)) / 2,
   },
+
   eventsCarousel: {
     paddingBottom: 20,
   },
+
   eventCard: {
     width: width * 0.85, // Largura do card principal
     backgroundColor: '#fff',
@@ -267,13 +265,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 1, // Opacidade aumentada para 40%
     shadowRadius: 8, // Raio de desfoque maior
     elevation: 6, // Propriedade específica para Android, aumentada
-    
   },
+
   eventImage: {
     width: '100%',
     height: 150, // Aumentado para dar mais destaque à imagem
     resizeMode: 'cover',
   },
+
   eventCardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -281,12 +280,14 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     color: '#333',
   },
+
   eventCardLocation: {
     fontSize: 14,
     color: '#666',
     paddingHorizontal: 15,
     marginTop: 5,
   },
+
   eventCardDate: {
     fontSize: 14,
     color: '#666',
@@ -294,6 +295,7 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
     marginTop: 5,
   },
+
   paginationDotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -303,6 +305,7 @@ const styles = StyleSheet.create({
     padding:5,
     backgroundColor: 'transparent',
   },
+
   paginationDot: {
     width: 8,
     height: 8,
@@ -310,6 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'yellow',
     marginHorizontal: 4,
   },
+
   paginationDotActive: {
     backgroundColor: '#006db2',
     width: 10,
@@ -323,6 +327,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: 'transparent',
   },
+
   allEventsListTitle: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -330,6 +335,7 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'left',
   },
+
   listItemCard: {
     flexDirection: 'row', // Imagem ao lado do texto
     backgroundColor: '#fff',
@@ -343,8 +349,8 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
     marginBottom: 15, // Espaçamento entre os itens da lista
-    
   },
+
   listItemImage: {
     width: 100, // Largura da imagem na lista
     height: 100, // Altura da imagem na lista
@@ -352,26 +358,31 @@ const styles = StyleSheet.create({
     borderRadius: 8, // Cantos arredondados para a imagem
     margin: 10, // Margem interna
   },
+
   listItemTextContent: {
     flex: 1, // Ocupa o restante do espaço
     padding: 10,
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
+
   listItemTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
   },
+
   listItemLocation: {
     fontSize: 13,
     color: '#666',
   },
+
   listItemDate: {
     fontSize: 13,
     color: '#666',
   },
+
   listItemDescription: {
     fontSize: 12,
     color: '#888',
