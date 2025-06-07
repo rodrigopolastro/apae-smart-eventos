@@ -5,8 +5,7 @@ import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, NativeSynt
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useRef, useState, useEffect } from 'react';
 import CustomHeader from '@/components/CustomHeader';
-import * as Font from 'expo-font';
-import { MaterialIcons } from '@expo/vector-icons';
+
 
 const { width } = Dimensions.get('window');
 

@@ -1,144 +1,175 @@
-// components/QrCodeScannerComponent.tsx
-
-import { Ionicons } from '@expo/vector-icons';
+import { ThemedView } from '@/components/ThemedView';
+import { AntDesign, Ionicons  } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import React, { useRef, useState, useEffect } from 'react';
-import { Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // Para o header do modal se quiser estilizar
+import React, { useRef, useState } from 'react';
+import { Alert, Button, Modal, StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-interface QrCodeScannerProps {
-  isVisible: boolean;
-  onClose: () => void;
-  onQRCodeRead: (data: string) => void;
-  // Opcional: para exibir a validação aqui ou deixar para a tela pai
-  showValidation?: (isValid: boolean) => void;
-}
+import CustomHeader from '../components/CustomHeaderLogin';
 
-export default function QrCodeScannerComponent({ isVisible, onClose, onQRCodeRead }: QrCodeScannerProps) {
+export default function ReadQrCode() {
+  const [modalIsVisible, setModalIsVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const qrCodeLock = useRef(false); // Para evitar múltiplas leituras rapidamente
+  // 'validationVisible' não está sendo usada para o problema de múltiplas janelas
+  const [validationVisible, setValidationVisible] = useState(false);
+  const qrCodeLock = useRef(false); // Esta é a trava que vamos usar
 
-  // Efeito para solicitar permissão quando o modal se torna visível
-  useEffect(() => {
-    if (isVisible) {
-      (async () => {
-        try {
-          const { granted } = await requestPermission();
-          if (!granted) {
-            Alert.alert('Câmera', 'Habilite o uso da câmera para ler o QR Code.', [
-              { text: 'OK', onPress: onClose } // Fecha o modal se a permissão for negada
-            ]);
-          }
-          qrCodeLock.current = false; // Resetar o lock ao abrir
-        } catch (error) {
-          console.error("Erro ao solicitar permissão da câmera:", error);
-          onClose(); // Fechar em caso de erro
-        }
-      })();
+  async function handleOpenCamera() {
+    try {
+      const { granted } = await requestPermission();
+
+      if (!granted) {
+        Alert.alert('Câmera', 'Habilite o uso da câmera para ler o QR Code.');
+        return;
+      }
+      setModalIsVisible(true);
+      qrCodeLock.current = false; // Resetar a trava ao abrir a câmera
+    } catch (error) {
+      console.log(error);
     }
-  }, [isVisible, requestPermission, onClose]);
-
-  const handleBarcodeScanned = ({ data }: { data: string }) => {
-    if (data && !qrCodeLock.current) {
-      qrCodeLock.current = true; // Bloqueia novas leituras
-      onQRCodeRead(data); // Envia os dados para a função passada por prop
-      onClose(); // Fecha o modal após a leitura
-      // Opcional: Se quiser que a validação seja exibida aqui dentro do componente,
-      // você precisaria de um estado local e lógica para o modal de validação.
-      // Mas geralmente é melhor que a tela pai lide com a validação.
-    }
-  };
-
-  if (!permission) {
-    // Permissões de câmera estão carregando
-    return (
-      <Modal visible={isVisible} animationType="slide" transparent={false}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Verificando permissões da câmera...</Text>
-        </View>
-      </Modal>
-    );
   }
 
-  if (!permission.granted) {
-    // Permissão não concedida, mas o alerta já foi mostrado pelo useEffect
-    return null; // Não renderiza nada ou pode renderizar uma mensagem alternativa
+  function handleQRCodeRead(data: string) {
+    if (qrCodeLock.current) {
+      return; // Se já está travado, sai da função para evitar múltiplas chamadas
+    }
+    qrCodeLock.current = true; // Trava o sistema para evitar novas leituras
+    setModalIsVisible(false); // Fecha o modal da câmera
+    //chama a requisicao "validateqrcode" da api e verifica se o retorno eh valido ou invalido
+    Alert.alert('QR Code Lido', data, [
+      {
+        text: 'OK',
+        onPress: () => {
+          // Opcional: Você pode resetar a trava aqui se quiser que a câmera possa ser reaberta e ler outro QR Code
+          // ou simplesmente permitir que ela seja resetada quando a câmera for aberta novamente
+          qrCodeLock.current = false;
+        },
+      },
+    ]);
+    console.log(data);
   }
 
   return (
-    <Modal visible={isVisible} animationType="slide" transparent={false}>
-      <LinearGradient
-        colors={['#007AFF', '#5DADE2']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.modalHeader}
-      >
-        <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
-          <Ionicons name="close" size={28} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.modalHeaderText}>Escanear QR Code</Text>
-      </LinearGradient>
-
-      <CameraView
-        style={styles.camera}
-        facing='back'
-        onBarcodeScanned={handleBarcodeScanned}
-      >
-        {/* Você pode adicionar um overlay ou um guia visual aqui se quiser */}
-        <View style={styles.overlay}>
-          <View style={styles.qrCodeFrame} />
+    <ThemedView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <CustomHeader />
+        <View style={styles.mainContentWrapper}>
+          <TouchableOpacity onPress={handleOpenCamera} style={styles.qrCodeButton}>
+            <LinearGradient
+              colors={['#007AFF', '#5DADE2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.qrCodeButtonGradient}
+            >
+              <Ionicons name="scan" size={24} color="white" />
+              <Text style={styles.qrCodeButtonText}>Ler QR Code</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-      </CameraView>
-    </Modal>
+      </ScrollView>
+
+      <Modal visible={modalIsVisible} style={{ flex: 1 }}>
+        <CameraView
+          style={{ flex: 1 }}
+          facing='back'
+          onBarcodeScanned={({ data }) => {
+            // Apenas chame handleQRCodeRead se a trava não estiver ativada
+            if (data && !qrCodeLock.current) {
+              handleQRCodeRead(data);
+            }
+          }}
+        />
+
+        <View style={styles.footer}>
+          <Button title='Cancelar' onPress={() => setModalIsVisible(false)} />
+        </View>
+      </Modal>
+    </ThemedView>
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
+export const styles = StyleSheet.create({
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
-  loadingText: {
-    fontSize: 18,
-    color: '#333',
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 40,
   },
-  camera: {
-    flex: 1,
-  },
-  overlay: {
+  mainContentWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)', // Fundo escuro para destacar o frame
-  },
-  qrCodeFrame: {
-    width: 250,
-    height: 250,
-    borderWidth: 2,
-    borderColor: 'white', // Cor da moldura
-    borderRadius: 10,
-    backgroundColor: 'transparent',
-  },
-  modalHeader: {
+    paddingTop: 75,
+    paddingHorizontal: 20,
     width: '100%',
-    height: 80,
+  },
+  qrCodeButton: {
+    width: '80%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  qrCodeButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+    gap: 10,
+  },
+  qrCodeButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  cameraFooter: {
+    position: 'absolute',
+    bottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  validationContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 20,
-    flexDirection: 'row',
-    position: 'relative',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  modalCloseButton: {
-    position: 'absolute',
-    left: 20,
-    top: 35,
-    zIndex: 1,
+  validationContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  modalHeaderText: {
-    color: 'white',
+  validationText: {
+    marginTop: 15,
+    textAlign: 'center',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 10,
+    alignItems: 'center',
   },
 });

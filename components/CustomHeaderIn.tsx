@@ -3,7 +3,8 @@ import { StyleSheet, TouchableOpacity, Dimensions, Image, View, Text } from 'rea
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
-
+import * as Font from 'expo-font';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 

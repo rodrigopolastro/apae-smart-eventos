@@ -4,49 +4,91 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../api'; // Importe sua instância do Axios
+import CustomHeader from '../components/CustomHeader';
 
-// Importe o CustomHeader
-import CustomHeader from '../components/CustomHeader'; // Ajuste este caminho conforme sua estrutura de pastas
+// Definição de tipos para os dados do evento e tickets
+interface EventDetails {
+  id: string;
+  image: string; // URL da imagem
+  title: string;
+  date: string;
+  location: string;
+  description: string;
+  fullDate: string;
+  adminDetails: {
+    ticketsAvailable: number;
+    ticketsSold: number;
+    attendees: number;
+    ticketPrice: number;
+    revenue: number;
+  };
+  ticketTypes: {
+    [key: string]: { // Ex: 'vip', 'normal', 'meia'
+      count: number; // estoque disponível
+      price: number;
+    };
+  };
+}
+
+// Tipo para o estado de tickets selecionados para compra
+interface SelectedTickets {
+  vip: { count: number; price: number };
+  normal: { count: number; price: number };
+  meia: { count: number; price: number };
+}
 
 export default function EventDescriptionScreen() {
   const router = useRouter();
   const { eventId } = useLocalSearchParams();
-  const [eventDetails, setEventDetails] = useState<any>(null);
+  const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
   const [showAdminDetails, setShowAdminDetails] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
-  const [tickets, setTickets] = useState({
-    vip: { count: 0, price: 250.00 },
-    normal: { count: 0, price: 120.00 },
-    meia: { count: 0, price: 60.00 }
+  const [selectedTickets, setSelectedTickets] = useState<SelectedTickets>({
+    vip: { count: 0, price: 0 },
+    normal: { count: 0, price: 0 },
+    meia: { count: 0, price: 0 }
   });
-
-  // Dados mockados
-  const mockEventsData = {
-    '1': {
-      id: '1',
-      image: require('../assets/images/festajunina.jpg'),
-      title: 'Expo Ecomm Circuito 2025',
-      date: '25/05/2025',
-      location: 'Goiânia - GO',
-      description: 'A Expo Ecomm Circuito 2025 é o maior evento de e-commerce e marketing digital do Centro-Oeste. Prepare-se para dois dias de imersão em tendências, estratégias e inovações que estão moldando o futuro do comércio eletrônico.',
-      fullDate: 'Terça-feira, 14 de Outubro de 2025 • 13h00',
-      adminDetails: {
-        ticketsAvailable: 500,
-        ticketsSold: 320,
-        attendees: 280,
-        ticketPrice: 120.00,
-        revenue: 38400.00
-      }
-    },
-    // ... outros eventos com mesma estrutura
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (eventId) {
-      setEventDetails(mockEventsData[eventId as keyof typeof mockEventsData]);
-    }
+    const fetchEventDetails = async () => {
+      if (!eventId) {
+        setError('ID do evento não fornecido.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        // Faz a requisição para buscar os detalhes do evento pelo ID
+        const response = await api.get(`/events/${eventId}`);
+        const data: EventDetails = response.data;
+
+        // Atualiza os detalhes do evento
+        setEventDetails(data);
+
+        // Inicializa os tickets selecionados com os preços do backend, mas count em 0
+        const initialSelectedTickets: SelectedTickets = {
+            vip: { count: 0, price: data.ticketTypes?.vip?.price || 0 },
+            normal: { count: 0, price: data.ticketTypes?.normal?.price || 0 },
+            meia: { count: 0, price: data.ticketTypes?.meia?.price || 0 }
+        };
+        setSelectedTickets(initialSelectedTickets);
+
+      } catch (err: any) {
+        console.error('Erro ao buscar detalhes do evento:', err);
+        setError(err.response?.data?.message || 'Falha ao carregar detalhes do evento.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEventDetails();
   }, [eventId]);
 
   const handleGoBack = () => {
@@ -69,11 +111,12 @@ export default function EventDescriptionScreen() {
   };
 
   const updateTicketCount = (type: 'vip' | 'normal' | 'meia', operation: 'increase' | 'decrease') => {
-    setTickets(prev => {
-      const newCount = operation === 'increase' 
-        ? prev[type].count + 1 
+    setSelectedTickets(prev => {
+      const currentStock = eventDetails?.ticketTypes[type]?.count || 0; // Estoque disponível no backend
+      const newCount = operation === 'increase'
+        ? Math.min(currentStock, prev[type].count + 1) // Não pode exceder o estoque
         : Math.max(0, prev[type].count - 1);
-      
+
       return {
         ...prev,
         [type]: {
@@ -85,25 +128,74 @@ export default function EventDescriptionScreen() {
   };
 
   const calculateTotal = () => {
-    return (tickets.vip.count * tickets.vip.price) +
-           (tickets.normal.count * tickets.normal.price) +
-           (tickets.meia.count * tickets.meia.price);
+    return (selectedTickets.vip.count * selectedTickets.vip.price) +
+           (selectedTickets.normal.count * selectedTickets.normal.price) +
+           (selectedTickets.meia.count * selectedTickets.meia.price);
   };
 
-  const handlePurchase = () => {
-    alert(`Compra realizada! Total: ${formatCurrency(calculateTotal())}`);
-    setShowTicketModal(false);
-    setTickets({
-      vip: { count: 0, price: 250.00 },
-      normal: { count: 0, price: 120.00 },
-      meia: { count: 0, price: 60.00 }
-    });
+  const handlePurchase = async () => {
+    if (calculateTotal() === 0) {
+      Alert.alert('Compra', 'Por favor, selecione pelo menos um ingresso.');
+      return;
+    }
+
+    setLoading(true); // Inicia loading para a compra
+    try {
+      const ticketsToPurchase = {
+        vip: selectedTickets.vip.count,
+        normal: selectedTickets.normal.count,
+        meia: selectedTickets.meia.count,
+      };
+
+      const response = await api.post(`/events/${eventId}/purchase`, { tickets: ticketsToPurchase });
+
+      if (response.status === 201) {
+        Alert.alert('Sucesso!', 'Compra de ingressos realizada com sucesso!');
+        setShowTicketModal(false);
+        // Opcional: recarregar detalhes do evento para atualizar estoque
+        // Ou simplesmente resetar os contadores e forçar um re-fetch
+        setEventDetails(null); // Força o re-fetch no próximo render do useEffect
+        setSelectedTickets({
+          vip: { count: 0, price: eventDetails?.ticketTypes?.vip?.price || 0 },
+          normal: { count: 0, price: eventDetails?.ticketTypes?.normal?.price || 0 },
+          meia: { count: 0, price: eventDetails?.ticketTypes?.meia?.price || 0 }
+        });
+      }
+    } catch (err: any) {
+      console.error('Erro ao comprar ingressos:', err);
+      Alert.alert('Erro na compra', err.response?.data?.message || 'Não foi possível completar a compra.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <ThemedText>Carregando detalhes do evento...</ThemedText>
+      </ThemedView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ThemedText style={{ color: 'red' }}>{error}</ThemedText>
+        <TouchableOpacity style={styles.actionButton} onPress={handleGoBack}>
+            <ThemedText style={styles.buttonText}>Voltar</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
 
   if (!eventDetails) {
     return (
       <ThemedView style={styles.loadingContainer}>
-        <ThemedText>Carregando detalhes do evento...</ThemedText>
+        <ThemedText>Evento não encontrado.</ThemedText>
+        <TouchableOpacity style={styles.actionButton} onPress={handleGoBack}>
+            <ThemedText style={styles.buttonText}>Voltar</ThemedText>
+        </TouchableOpacity>
       </ThemedView>
     );
   }
@@ -111,39 +203,40 @@ export default function EventDescriptionScreen() {
   return (
     <ThemedView style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Conteúdo Principal */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Adicione o CustomHeader aqui */}
-          <CustomHeader /> 
-
-          {/* Wrapper para o restante do conteúdo com paddingTop */}
+          <CustomHeader />
           <View style={styles.eventContentWrapper}>
-            {/* Imagem e informações básicas */}
-            <Image source={eventDetails.image} style={styles.eventImage} />
+            {/* O Image source deve ser uma URI se vier do backend */}
+            <Image source={{ uri: eventDetails.image }} style={styles.eventImage} />
             <ThemedText style={styles.eventTitle}>{eventDetails.title}</ThemedText>
             <ThemedText style={styles.eventDateLocation}>{eventDetails.fullDate}</ThemedText>
             <ThemedText style={styles.eventDateLocation}>{eventDetails.location}</ThemedText>
 
             <View style={styles.divider} />
 
-            {/* Botões de Ação */}
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.actionButton, styles.primaryButton]}
                 onPress={handleAcquireTicket}
               >
                 <ThemedText style={styles.buttonText}>Adquirir Ingresso</ThemedText>
               </TouchableOpacity>
-              
-      
+              {/* Botão de detalhes administrativos visível apenas para usuários com permissão */}
+              {/* Você precisaria de um estado ou contexto de usuário para controlar isso */}
+              {/* Por enquanto, vou manter o toggle */}
+              <TouchableOpacity
+                style={[styles.actionButton, styles.secondaryButton]}
+                onPress={toggleAdminDetails}
+              >
+                <ThemedText style={styles.buttonText}>
+                  {showAdminDetails ? 'Ver Descrição' : 'Ver Detalhes Admin'}
+                </ThemedText>
+              </TouchableOpacity>
             </View>
 
-            {/* Conteúdo Dinâmico */}
             {showAdminDetails ? (
               <>
-                {/* Cards Administrativos */}
                 <View style={styles.adminCardsContainer}>
-                  {/* Card Ingressos Disponíveis */}
                   <View style={styles.adminCard}>
                     <MaterialIcons name="confirmation-number" size={28} color="#007AFF" />
                     <ThemedText style={styles.adminCardTitle}>Disponíveis</ThemedText>
@@ -153,7 +246,6 @@ export default function EventDescriptionScreen() {
                     <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
                   </View>
 
-                  {/* Card Ingressos Vendidos */}
                   <View style={styles.adminCard}>
                     <Ionicons name="cart" size={28} color="#34C759" />
                     <ThemedText style={styles.adminCardTitle}>Vendidos</ThemedText>
@@ -163,7 +255,6 @@ export default function EventDescriptionScreen() {
                     <ThemedText style={styles.adminCardSubtitle}>Ingressos</ThemedText>
                   </View>
 
-                  {/* Card Presenças Confirmadas */}
                   <View style={styles.adminCard}>
                     <Ionicons name="people" size={28} color="#5856D6" />
                     <ThemedText style={styles.adminCardTitle}>Presentes</ThemedText>
@@ -173,7 +264,6 @@ export default function EventDescriptionScreen() {
                     <ThemedText style={styles.adminCardSubtitle}>Pessoas</ThemedText>
                   </View>
 
-                  {/* Card Preço do Ingresso */}
                   <View style={styles.adminCard}>
                     <MaterialIcons name="attach-money" size={28} color="#FF9500" />
                     <ThemedText style={styles.adminCardTitle}>Preço Unitário</ThemedText>
@@ -184,7 +274,6 @@ export default function EventDescriptionScreen() {
                   </View>
                 </View>
 
-                {/* Card de Arrecadação Total */}
                 <View style={styles.revenueCard}>
                   <View style={styles.revenueHeader}>
                     <Ionicons name="cash" size={32} color="#4CD964" />
@@ -207,7 +296,6 @@ export default function EventDescriptionScreen() {
           </View>
         </ScrollView>
 
-        {/* Modal de Compra de Ingressos */}
         <Modal
           animationType="slide"
           transparent={false}
@@ -216,141 +304,91 @@ export default function EventDescriptionScreen() {
         >
           <ThemedView style={styles.modalContainer}>
             <SafeAreaView style={styles.safeArea}>
-              {/* O header do modal pode permanecer fixo se desejar */}
               <LinearGradient
                 colors={['#005452', '#48a3a7']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalHeader}
               >
-                {/* Aqui você pode adicionar um botão de fechar ou título específico para o modal */}
+                <TouchableOpacity onPress={() => setShowTicketModal(false)} style={styles.closeModalButton}>
+                    <Ionicons name="close" size={28} color="white" />
+                </TouchableOpacity>
               </LinearGradient>
 
               <ScrollView contentContainerStyle={styles.modalContent}>
                 <ThemedText style={styles.modalTitle}>Ingressos disponíveis para:</ThemedText>
                 <ThemedText style={styles.eventModalTitle}>{eventDetails.title}</ThemedText>
-                
-                {/* Card Ingresso VIP */}
-                <ThemedView style={styles.ticketCard}>
-                  <ThemedView style={styles.ticketInfo}>
-                    <ThemedText style={styles.ticketType}>Ingresso VIP</ThemedText>
-                    <ThemedText style={styles.ticketDescription}>Acesso premium + área exclusiva</ThemedText>
-                    <ThemedText style={styles.ticketPrice}>{formatCurrency(tickets.vip.price)}</ThemedText>
-                  </ThemedView>
-                  <ThemedView style={styles.counterContainer}>
-                    <TouchableOpacity 
-                      style={styles.counterButton}
-                      onPress={() => updateTicketCount('vip', 'decrease')}
-                    >
-                      <Ionicons name="remove" size={20} color="#FF3B30" />
-                    </TouchableOpacity>
-                    <ThemedText style={styles.counterValue}>{tickets.vip.count}</ThemedText>
-                    <TouchableOpacity 
-                      style={styles.counterButton}
-                      onPress={() => updateTicketCount('vip', 'increase')}
-                    >
-                      <Ionicons name="add" size={20} color="#34C759" />
-                    </TouchableOpacity>
-                  </ThemedView>
-                </ThemedView>
 
-                {/* Card Ingresso Normal */}
-                <ThemedView style={styles.ticketCard}>
-                  <ThemedView style={styles.ticketInfo}>
-                    <ThemedText style={styles.ticketType}>Ingresso Normal</ThemedText>
-                    <ThemedText style={styles.ticketDescription}>Acesso geral ao evento</ThemedText>
-                    <ThemedText style={styles.ticketPrice}>{formatCurrency(tickets.normal.price)}</ThemedText>
-                  </ThemedView>
-                  <ThemedView style={styles.counterContainer}>
-                    <TouchableOpacity 
-                      style={styles.counterButton}
-                      onPress={() => updateTicketCount('normal', 'decrease')}
-                    >
-                      <Ionicons name="remove" size={20} color="#FF3B30" />
-                    </TouchableOpacity>
-                    <ThemedText style={styles.counterValue}>{tickets.normal.count}</ThemedText>
-                    <TouchableOpacity 
-                      style={styles.counterButton}
-                      onPress={() => updateTicketCount('normal', 'increase')}
-                    >
-                      <Ionicons name="add" size={20} color="#34C759" />
-                    </TouchableOpacity>
-                  </ThemedView>
-                </ThemedView>
+                {/* Renderizar dinamicamente os tipos de ingresso */}
+                {Object.entries(eventDetails.ticketTypes).map(([type, { price, count: stock }]) => (
+                    <ThemedView key={type} style={styles.ticketCard}>
+                        <ThemedView style={styles.ticketInfo}>
+                            <ThemedText style={styles.ticketType}>Ingresso {type.charAt(0).toUpperCase() + type.slice(1)}</ThemedText>
+                            <ThemedText style={styles.ticketDescription}>
+                                {type === 'vip' && 'Acesso premium + área exclusiva'}
+                                {type === 'normal' && 'Acesso geral ao evento'}
+                                {type === 'meia' && 'Estudantes, idosos e pessoas com deficiência'}
+                                {/* Adicione mais descrições conforme seus tipos de ingresso */}
+                            </ThemedText>
+                            <ThemedText style={styles.ticketPrice}>{formatCurrency(price)}</ThemedText>
+                        </ThemedView>
+                        <ThemedView style={styles.counterContainer}>
+                            <TouchableOpacity
+                                style={styles.counterButton}
+                                onPress={() => updateTicketCount(type as 'vip' | 'normal' | 'meia', 'decrease')}
+                                disabled={selectedTickets[type as 'vip' | 'normal' | 'meia'].count === 0}
+                            >
+                                <Ionicons name="remove" size={20} color={selectedTickets[type as 'vip' | 'normal' | 'meia'].count === 0 ? '#CCC' : '#FF3B30'} />
+                            </TouchableOpacity>
+                            <ThemedText style={styles.counterValue}>
+                                {selectedTickets[type as 'vip' | 'normal' | 'meia'].count}
+                            </ThemedText>
+                            <TouchableOpacity
+                                style={styles.counterButton}
+                                onPress={() => updateTicketCount(type as 'vip' | 'normal' | 'meia', 'increase')}
+                                disabled={selectedTickets[type as 'vip' | 'normal' | 'meia'].count >= stock} // Desabilita se atingir o estoque
+                            >
+                                <Ionicons name="add" size={20} color={selectedTickets[type as 'vip' | 'normal' | 'meia'].count >= stock ? '#CCC' : '#34C759'} />
+                            </TouchableOpacity>
+                        </ThemedView>
+                    </ThemedView>
+                ))}
 
-                {/* Card Ingresso Meia */}
-                <ThemedView style={styles.ticketCard}>
-                  <ThemedView style={styles.ticketInfo}>
-                    <ThemedText style={styles.ticketType}>Ingresso Meia</ThemedText>
-                    <ThemedText style={styles.ticketDescription}>Estudantes, idosos e pessoas com deficiência</ThemedText>
-                    <ThemedText style={styles.ticketPrice}>{formatCurrency(tickets.meia.price)}</ThemedText>
-                  </ThemedView>
-                  <ThemedView style={styles.counterContainer}>
-                    <TouchableOpacity 
-                      style={styles.counterButton}
-                      onPress={() => updateTicketCount('meia', 'decrease')}
-                    >
-                      <Ionicons name="remove" size={20} color="#FF3B30" />
-                    </TouchableOpacity>
-                    <ThemedText style={styles.counterValue}>{tickets.meia.count}</ThemedText>
-                    <TouchableOpacity 
-                      style={styles.counterButton}
-                      onPress={() => updateTicketCount('meia', 'increase')}
-                    >
-                      <Ionicons name="add" size={20} color="#34C759" />
-                    </TouchableOpacity>
-                  </ThemedView>
-                </ThemedView>
-
-                {/* Resumo da Compra */}
                 <ThemedView style={styles.summaryCard}>
                   <ThemedText style={styles.summaryTitle}>Resumo da Compra</ThemedText>
-                  
-                  {tickets.vip.count > 0 && (
-                    <ThemedView style={styles.summaryItem}>
-                      <ThemedText style={styles.summaryText}>{tickets.vip.count}x Ingresso VIP</ThemedText>
-                      <ThemedText style={styles.summaryText}>
-                        {formatCurrency(tickets.vip.count * tickets.vip.price)}
-                      </ThemedText>
-                    </ThemedView>
-                  )}
-                  
-                  {tickets.normal.count > 0 && (
-                    <ThemedView style={styles.summaryItem}>
-                      <ThemedText style={styles.summaryText}>{tickets.normal.count}x Ingresso Normal</ThemedText>
-                      <ThemedText style={styles.summaryText}>
-                        {formatCurrency(tickets.normal.count * tickets.normal.price)}
-                      </ThemedText>
-                    </ThemedView>
-                  )}
-                  
-                  {tickets.meia.count > 0 && (
-                    <ThemedView style={styles.summaryItem}>
-                      <ThemedText style={styles.summaryText}>{tickets.meia.count}x Ingresso Meia</ThemedText>
-                      <ThemedText style={styles.summaryText}>
-                        {formatCurrency(tickets.meia.count * tickets.meia.price)}
-                      </ThemedText>
-                    </ThemedView>
-                  )}
-                  
+
+                  {Object.entries(selectedTickets).map(([type, { count, price }]) => (
+                    count > 0 && (
+                      <ThemedView key={type} style={styles.summaryItem}>
+                        <ThemedText style={styles.summaryText}>{count}x Ingresso {type.charAt(0).toUpperCase() + type.slice(1)}</ThemedText>
+                        <ThemedText style={styles.summaryText}>
+                          {formatCurrency(count * price)}
+                        </ThemedText>
+                      </ThemedView>
+                    )
+                  ))}
+
                   <ThemedView style={styles.totalContainer}>
                     <ThemedText style={styles.totalText}>Total:</ThemedText>
                     <ThemedText style={styles.totalValue}>{formatCurrency(calculateTotal())}</ThemedText>
                   </ThemedView>
                 </ThemedView>
 
-                {/* Botão de Finalizar Compra */}
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.purchaseButton,
                     calculateTotal() === 0 && styles.disabledButton
                   ]}
                   onPress={handlePurchase}
-                  disabled={calculateTotal() === 0}
+                  disabled={calculateTotal() === 0 || loading} // Desabilita durante o carregamento
                 >
-                  <ThemedText style={styles.purchaseButtonText}>
-                    Finalizar Compra
-                  </ThemedText>
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <ThemedText style={styles.purchaseButtonText}>
+                      Finalizar Compra
+                    </ThemedText>
+                  )}
                 </TouchableOpacity>
               </ScrollView>
             </SafeAreaView>
@@ -362,7 +400,8 @@ export default function EventDescriptionScreen() {
 }
 
 const styles = StyleSheet.create({
-  // Estilos base
+  // ... (seus estilos existentes, com algumas pequenas adições)
+
   mainContainer: {
     flex: 1,
     backgroundColor: '#fff',
@@ -378,8 +417,6 @@ const styles = StyleSheet.create({
   },
   // Ajuste para o padding do conteúdo principal após o cabeçalho
   scrollContent: {
-    // Remova o padding geral aqui, pois o padding será aplicado no eventContentWrapper
-    // paddingTop: 20, // Removido
     paddingBottom: 40,
   },
   // Novo estilo para o wrapper do conteúdo do evento
@@ -448,7 +485,7 @@ const styles = StyleSheet.create({
     color: '#48484A',
     textAlign: 'justify',
   },
-  
+
   // Estilos para a seção administrativa
   adminCardsContainer: {
     flexDirection: 'row',
@@ -485,7 +522,7 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
   },
-  
+
   // Card de arrecadação
   revenueCard: {
     backgroundColor: '#F7F7F7',
@@ -529,6 +566,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 10,
     paddingHorizontal: 20,
+    flexDirection: 'row', // Para posicionar o botão de fechar
+    alignItems: 'center',
+  },
+  closeModalButton: {
+    position: 'absolute', // Permite posicionar o botão de fechar
+    top: 30, // Ajuste a posição conforme necessário
+    right: 20,
+    padding: 5,
   },
   modalContent: {
     padding: 20,
@@ -562,7 +607,6 @@ const styles = StyleSheet.create({
   },
   ticketInfo: {
     flex: 1,
-    borderRadius:12,
     backgroundColor: 'transparent'
   },
   ticketType: {
@@ -620,14 +664,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
-    borderRadius:12,
     backgroundColor: 'transparent'
-    
+
   },
   summaryText: {
     fontSize: 16,
     color: '#48484A',
-    
+
   },
   totalContainer: {
     flexDirection: 'row',
@@ -636,7 +679,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
-    borderRadius:12,
     backgroundColor: 'transparent'
   },
   totalText: {
