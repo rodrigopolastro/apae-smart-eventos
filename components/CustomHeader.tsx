@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/ThemedText';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
+import * as Font from 'expo-font';
 
 const { width } = Dimensions.get('window');
 
@@ -35,7 +36,7 @@ export default function CustomHeader({ onLoginPress }: CustomHeaderProps) {
         style={styles.topBar}
       >
         <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-          <ThemedText style={styles.loginButtonText}><MaterialIcons name="login" size={20} color="#48a3a7" /></ThemedText>
+          <ThemedText style={styles.loginButtonText}>L</ThemedText>
         </TouchableOpacity>
       </LinearGradient>
 

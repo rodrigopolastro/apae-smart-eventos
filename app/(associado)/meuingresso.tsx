@@ -83,7 +83,7 @@ export default function MyTicketsScreen() {
   };
 
   const handleViewEvent = (eventId: string) => {
-    router.push({ pathname: '/eventdescription', params: { eventId } });
+    router.push({ pathname: '/eventdescriptionlogado', params: { eventId } });
   };
 
   const handleViewQRCode = (ticketId: string) => {
