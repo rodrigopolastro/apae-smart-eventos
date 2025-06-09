@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -10,73 +10,35 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; // Certifique-se de que está importado, embora não usado diretamente aqui
+import api from '../../api';
+import formatDate from '../../helpers/formatDate';
 
 // Importe o novo componente de cabeçalho
 import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste o caminho conforme sua estrutura de pastas
+import { TicketPdfModal } from '../../components/TicketPdfModal';
 
 const { width } = Dimensions.get('window');
 
-// Dados mockados dos ingressos do usuário
-const userTickets = [
-  {
-    id: 't1',
-    eventId: '1',
-    eventName: 'Expo Ecomm Circuito 2025',
-    eventDate: '14/10/2025 • 13h',
-    eventLocation: 'Goiânia - GO',
-    eventImage: require('../../assets/images/festajunina.jpg'),
-    type: 'VIP',
-    price: 250.00,
-    qrCode: 'https://example.com/qrcode1.pdf',
-    purchaseDate: '10/05/2025',
-    category: 'Tecnologia'
-  },
-  {
-    id: 't2',
-    eventId: '1',
-    eventName: 'Expo Ecomm Circuito 2025',
-    eventDate: '14/10/2025 • 13h',
-    eventLocation: 'Goiânia - GO',
-    eventImage: require('../../assets/images/festajunina.jpg'),
-    type: 'Normal',
-    price: 120.00,
-    qrCode: 'https://example.com/qrcode2.pdf',
-    purchaseDate: '10/05/2025',
-    category: 'Tecnologia'
-  },
-  {
-    id: 't3',
-    eventId: '3',
-    eventName: 'Festa Junina APAE',
-    eventDate: '14/06/2025 • 13h',
-    eventLocation: 'APAE Local',
-    eventImage: require('../../assets/images/festajunina.jpg'),
-    type: 'Meia',
-    price: 60.00,
-    qrCode: 'https://example.com/qrcode3.pdf',
-    purchaseDate: '20/05/2025',
-    category: 'Cultural'
-  },
-  {
-    id: 't4',
-    eventId: '5',
-    eventName: 'Conferência de IA',
-    eventDate: '20/11/2025 • 10h',
-    eventLocation: 'Rio de Janeiro - RJ',
-    eventImage: require('../../assets/images/festajunina.jpg'),
-    type: 'Normal',
-    price: 120.00,
-    qrCode: 'https://example.com/qrcode4.pdf',
-    purchaseDate: '01/06/2025',
-    category: 'Tech'
-  }
-];
-
 export default function MyTicketsScreen() {
   const router = useRouter();
+  const [userTickets, setUserTickets] = useState<any[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [pdfBase64, setPdfBase64] = useState<string | null>('');
+
+  useEffect(() => {
+    const fetchUserTickets = async () => {
+      try {
+        const loggedUserId = 3;
+        const response = await api.get(`/users/${loggedUserId}/tickets`);
+        setUserTickets(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar os ingressos do usuário:', error);
+      }
+    };
+    fetchUserTickets();
+  }, []);
 
   const handleBackPress = () => {
     router.back();
@@ -86,27 +48,21 @@ export default function MyTicketsScreen() {
     router.push({ pathname: '/eventdescriptionlogado', params: { eventId } });
   };
 
-  const handleViewQRCode = (ticketId: string) => {
-    const ticket = userTickets.find(t => t.id === ticketId);
-    alert(`Abrindo QRCode para ingresso ${ticketId}\nEvento: ${ticket?.eventName}\nURL: ${ticket?.qrCode}`);
-  };
+  const handleViewQRCode = async (ticketQrCodeId: string) => {
+    const response = await api.get(`/tickets/${ticketQrCodeId}/printTicket`);
 
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'Música': '#FF6B6B',
-      'Festival': '#4ECDC4',
-      'Cultural': '#45B7D1',
-      'Tecnologia': '#96CEB4',
-      'Tech': '#FECA57'
-    };
-    return colors[category] || '#DDA0DD';
+    // AQUIIIIIII -- TALITAAA
+    const buffer = Buffer.from(response.data);
+    const base64 = ''; //????;
+    setPdfBase64(base64);
+    setIsModalVisible(true);
   };
 
   const getTicketTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
-      'VIP': '#FF9500',
-      'Normal': '#007AFF',
-      'Meia': '#34C759'
+      VIP: '#FF9500',
+      Normal: '#007AFF',
+      Meia: '#34C759',
     };
     return colors[type] || '#007AFF';
   };
@@ -115,8 +71,13 @@ export default function MyTicketsScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
+      <TicketPdfModal
+        isModalVisible={isModalVisible}
+        setIsModalVisible={setIsModalVisible}
+        pdfBase64={pdfBase64}
+      />
+      <StatusBar barStyle='light-content' backgroundColor='transparent' translucent />
+
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
         {/* Adicione o CustomHeader aqui */}
         <CustomHeader />
@@ -141,8 +102,8 @@ export default function MyTicketsScreen() {
           {/* Lista de Ingressos - estilo similar aos eventos */}
           <View style={styles.ticketsSection}>
             {userTickets.map((ticket, index) => (
-              <TouchableOpacity 
-                key={ticket.id}
+              <TouchableOpacity
+                key={index}
                 style={styles.ticketCard}
                 onPress={() => handleViewEvent(ticket.eventId)}
                 activeOpacity={0.8}
@@ -153,27 +114,25 @@ export default function MyTicketsScreen() {
                     colors={['transparent', 'rgba(0,0,0,0.7)']}
                     style={styles.imageOverlay}
                   />
-                  
-                  {/* Badge da categoria */}
-                  <View style={styles.categoryBadge}>
-                    <Text style={[styles.categoryText, { backgroundColor: getCategoryColor(ticket.category) }]}>
-                      {ticket.category}
-                    </Text>
-                  </View>
-                  
+
                   {/* Badge do tipo de ingresso */}
                   <View style={styles.ticketTypeBadge}>
-                    <Text style={[styles.ticketTypeText, { backgroundColor: getTicketTypeColor(ticket.type) }]}>
+                    <Text
+                      style={[
+                        styles.ticketTypeText,
+                        { backgroundColor: getTicketTypeColor(ticket.ticketTypeId) },
+                      ]}
+                    >
                       {ticket.type}
                     </Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.cardContent}>
                   <Text style={styles.eventTitle} numberOfLines={2}>
                     {ticket.eventName}
                   </Text>
-                  
+
                   <View style={styles.eventDetails}>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailIcon}>📍</Text>
@@ -183,34 +142,32 @@ export default function MyTicketsScreen() {
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailIcon}>📅</Text>
-                      <Text style={styles.detailText}>
-                        {ticket.eventDate}
-                      </Text>
+                      <Text style={styles.detailText}>{formatDate(ticket.eventDateTime)}</Text>
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailIcon}>💰</Text>
                       <Text style={styles.detailText}>
-                        {ticket.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {ticket.price.toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        })}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
                       <Text style={styles.detailIcon}>🛒</Text>
                       <Text style={styles.detailText}>
-                        Comprado em {ticket.purchaseDate}
+                        Comprado em {formatDate(ticket.purchasedAt)}
                       </Text>
                     </View>
                   </View>
 
                   {/* Botão QR Code */}
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.qrCodeButton}
-                    onPress={() => handleViewQRCode(ticket.id)}
+                    onPress={() => handleViewQRCode(ticket.qrCodeId)}
                   >
-                    <LinearGradient
-                      colors={['#667eea', '#764ba2']}
-                      style={styles.qrCodeGradient}
-                    >
-                      <Ionicons name="qr-code" size={20} color="#fff" />
+                    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.qrCodeGradient}>
+                      <Ionicons name='qr-code' size={20} color='#fff' />
                       <Text style={styles.qrCodeButtonText}>Ver QR Code</Text>
                     </LinearGradient>
                   </TouchableOpacity>
