@@ -5,23 +5,27 @@ import { WebView } from 'react-native-webview';
 type TicketPdfModalProps = {
   isModalVisible: boolean;
   setIsModalVisible: (visible: boolean) => void;
-  pdfBase64: string | null;
+  fileUri: string | null;
 };
 
 export const TicketPdfModal = ({
   isModalVisible,
   setIsModalVisible,
-  pdfBase64,
+  fileUri,
 }: TicketPdfModalProps) => {
   // const [pdfUri, setPdfUri] = React.useState<string | null>(null);
   // const reader = new FileReader();
+
+  if (!fileUri || fileUri === '') {
+    return null;
+  }
 
   return (
     <Modal animationType='slide' transparent={true} visible={isModalVisible}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>Hello World! testes</Text>
-          (pdfBase64 ? <WebView source={{ uri: pdfBase64 }} /> : <Text>No PDF available</Text>)
+          <Text style={styles.modalText}>{fileUri}</Text>
+          <WebView source={{ uri: fileUri }} />
           <TouchableOpacity
             style={[styles.button, styles.buttonClose]}
             onPress={() => setIsModalVisible(false)}
