@@ -1,27 +1,49 @@
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { Alert, Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Pdf from 'react-native-pdf';
+
+const { width, height } = Dimensions.get('window');
 
 type TicketPdfModalProps = {
   isModalVisible: boolean;
   setIsModalVisible: (visible: boolean) => void;
-  pdfBase64: string | null;
+  pdfUri: string | null;
 };
 
 export const TicketPdfModal = ({
   isModalVisible,
   setIsModalVisible,
-  pdfBase64,
+  pdfUri,
 }: TicketPdfModalProps) => {
-  // const [pdfUri, setPdfUri] = React.useState<string | null>(null);
-  // const reader = new FileReader();
+  const source = pdfUri ? { uri: pdfUri, cache: true } : null;
 
   return (
     <Modal animationType='slide' transparent={true} visible={isModalVisible}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>Hello World! testes</Text>
-          (pdfBase64 ? <WebView source={{ uri: pdfBase64 }} /> : <Text>No PDF available</Text>)
+          <Text style={styles.modalText}>Ticket Details</Text>
+
+          <View style={styles.pdfViewerContainer}>
+            {source ? (
+              <Pdf
+                source={source}
+                onLoadComplete={(numberOfPages, filePath) => {
+                  console.log(`PDF loaded with ${numberOfPages} pages from: ${filePath}`);
+                }}
+                onError={(error) => {
+                  console.error('PDF Viewer Error:', error);
+                  // Correção aqui: Converte o erro para string de forma segura
+                  const errorMessage = typeof error === 'string' ? error : (error && typeof error === 'object' && 'message' in error ? error.message : String(error));
+                  Alert.alert('Erro no PDF', `Não foi possível exibir o PDF: ${errorMessage}`);
+                }}
+                enablePaging={true}
+                style={styles.pdf}
+              />
+            ) : (
+              <Text>No PDF available. Please ensure the ticket is saved locally.</Text>
+            )}
+          </View>
+
           <TouchableOpacity
             style={[styles.button, styles.buttonClose]}
             onPress={() => setIsModalVisible(false)}
@@ -39,12 +61,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalView: {
     margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,
-    padding: 35,
+    padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -54,11 +77,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    width: width * 0.9,
+    height: height * 0.8,
+  },
+  pdfViewerContainer: {
+    flex: 1,
+    width: '100%',
+    marginBottom: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pdf: {
+    flex: 1,
+    width: '100%',
   },
   button: {
     borderRadius: 20,
     padding: 10,
     elevation: 2,
+    marginTop: 10,
   },
   buttonOpen: {
     backgroundColor: '#F194FF',
@@ -74,5 +111,7 @@ const styles = StyleSheet.create({
   modalText: {
     marginBottom: 15,
     textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

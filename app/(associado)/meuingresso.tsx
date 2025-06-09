@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Dimensions,
   Image,
   ScrollView,
@@ -15,8 +16,12 @@ import {
 import api from '../../api';
 import formatDate from '../../helpers/formatDate';
 
-// Importe o novo componente de cabeçalho
-import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste o caminho conforme sua estrutura de pastas
+import { Buffer } from 'buffer'; // Manter esta linha
+
+// Importar expo-file-system
+import * as FileSystem from 'expo-file-system'; // <-- Adicione esta linha
+
+import CustomHeader from '../../components/CustomHeaderLogin';
 import { TicketPdfModal } from '../../components/TicketPdfModal';
 
 const { width } = Dimensions.get('window');
@@ -25,7 +30,8 @@ export default function MyTicketsScreen() {
   const router = useRouter();
   const [userTickets, setUserTickets] = useState<any[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [pdfBase64, setPdfBase64] = useState<string | null>('');
+  // Renomear pdfBase64 para pdfUri, pois agora armazenará uma URI de arquivo local
+  const [pdfUri, setPdfUri] = useState<string | null>(null); // <-- Alterado aqui
 
   useEffect(() => {
     const fetchUserTickets = async () => {
@@ -35,6 +41,7 @@ export default function MyTicketsScreen() {
         setUserTickets(response.data);
       } catch (error) {
         console.error('Erro ao buscar os ingressos do usuário:', error);
+        Alert.alert('Erro', 'Não foi possível carregar seus ingressos. Verifique sua conexão ou tente mais tarde.');
       }
     };
     fetchUserTickets();
@@ -49,13 +56,42 @@ export default function MyTicketsScreen() {
   };
 
   const handleViewQRCode = async (ticketQrCodeId: string) => {
-    const response = await api.get(`/tickets/${ticketQrCodeId}/printTicket`);
+    try {
+      const response = await api.get(`/tickets/${ticketQrCodeId}/printTicket`);
 
-    // AQUIIIIIII -- TALITAAA
-    const buffer = Buffer.from(response.data);
-    const base64 = ''; //????;
-    setPdfBase64(base64);
-    setIsModalVisible(true);
+      if (!response.data) {
+        console.error('Dados do PDF vazios ou inválidos na resposta do backend.');
+        Alert.alert('Erro', 'Não foi possível carregar o PDF do ingresso: dados ausentes ou inválidos.');
+        return;
+      }
+
+      const buffer = Buffer.from(response.data);
+      const base64 = buffer.toString('base64');
+
+      // --- LOGS DE DEPURAÇÃO (opcionais, mas úteis para verificar o Base64) ---
+      console.log('--- DEPURANDO PDF BASE64 (ANTES DE SALVAR NO ARQUIVO) ---');
+      console.log('Início da string Base64 do PDF (primeiros 100 caracteres):', base64.substring(0, 100));
+      console.log('Tamanho total da string Base64 do PDF:', base64.length, 'caracteres');
+      console.log('--- FIM DA DEPURACAO PDF BASE64 ---');
+      // --- FIM DOS LOGS DE DEPURACAO ---
+
+      // SALVAR O PDF BASE64 EM UM ARQUIVO LOCAL
+      const fileName = `ticket_${ticketQrCodeId}.pdf`;
+      const fileUri = FileSystem.documentDirectory + fileName;
+
+      await FileSystem.writeAsStringAsync(
+        fileUri,
+        base64,
+        { encoding: FileSystem.EncodingType.Base64 } // Especifique o encoding como Base64
+      );
+      console.log('PDF salvo localmente em:', fileUri);
+
+      setPdfUri(fileUri); // Define a URI do arquivo local para o estado
+      setIsModalVisible(true); // Abre o modal
+    } catch (error) {
+      console.error('Erro ao gerar/salvar o QR Code/PDF:', error);
+      Alert.alert('Erro', 'Não foi possível carregar o QR Code/PDF. Verifique sua conexão ou tente novamente mais tarde.');
+    }
   };
 
   const getTicketTypeColor = (type: string) => {
@@ -71,20 +107,19 @@ export default function MyTicketsScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Componente Modal para exibir o PDF */}
       <TicketPdfModal
         isModalVisible={isModalVisible}
         setIsModalVisible={setIsModalVisible}
-        pdfBase64={pdfBase64}
+        // Passar pdfUri para o modal
+        pdfUri={pdfUri} // <-- Alterado aqui
       />
       <StatusBar barStyle='light-content' backgroundColor='transparent' translucent />
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        {/* Adicione o CustomHeader aqui */}
         <CustomHeader />
 
-        {/* Padding superior para garantir que o conteúdo não fique escondido atrás do cabeçalho */}
         <View style={styles.contentPaddingTop}>
-          {/* Badge de status */}
           <View style={styles.sectionHeader}>
             <View style={styles.badgeContainer}>
               <LinearGradient
@@ -99,7 +134,6 @@ export default function MyTicketsScreen() {
             <Text style={styles.sectionSubtitle}>Toque para ver detalhes ou QR Code</Text>
           </View>
 
-          {/* Lista de Ingressos - estilo similar aos eventos */}
           <View style={styles.ticketsSection}>
             {userTickets.map((ticket, index) => (
               <TouchableOpacity
@@ -115,7 +149,6 @@ export default function MyTicketsScreen() {
                     style={styles.imageOverlay}
                   />
 
-                  {/* Badge do tipo de ingresso */}
                   <View style={styles.ticketTypeBadge}>
                     <Text
                       style={[
@@ -161,7 +194,6 @@ export default function MyTicketsScreen() {
                     </View>
                   </View>
 
-                  {/* Botão QR Code */}
                   <TouchableOpacity
                     style={styles.qrCodeButton}
                     onPress={() => handleViewQRCode(ticket.qrCodeId)}
@@ -190,9 +222,8 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
   },
-  // Adicionado padding superior para o conteúdo abaixo do cabeçalho
   contentPaddingTop: {
-    paddingTop: 65, // Ajuste este valor se o cabeçalho cobrir o conteúdo. Este valor empurra o conteúdo para baixo.
+    paddingTop: 65,
   },
   sectionHeader: {
     alignItems: 'center',
