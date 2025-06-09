@@ -1,5 +1,5 @@
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 // --- ATENÇÃO: CONFIGURAÇÃO DA BASE_URL ---
 // Substitua 'SEU_ENDERECO_IP_OU_DOMINIO' pelo endereço correto.
@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 3. Para produção: Será o domínio do seu servidor (ex: 'https://api.seusmarteventos.com').
 
 const api = axios.create({
-  baseURL: 'http://34.151.200.231:3000',
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
   timeout: 10000, // Tempo limite da requisição (10 segundos)
   headers: {
     'Content-Type': 'application/json',
@@ -23,7 +23,6 @@ const api = axios.create({
 });
 
 // Opcional: Adicionar um interceptor para enviar o token JWT em todas as requisições
-
 
 api.interceptors.request.use(
   async (config) => {

@@ -1,5 +1,5 @@
 // services/api.service.ts
-const API_BASE_URL = 'http://34.151.200.231:3000'; // Ajuste para o IP do seu backend
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL; // Ajuste para o IP do seu backend
 
 export interface SignupData {
   name: string;
@@ -26,12 +26,9 @@ export interface ApiError {
 }
 
 class ApiService {
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',

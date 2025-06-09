@@ -1,8 +1,20 @@
-import { Ionicons, AntDesign } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, TextInput, ActivityIndicator, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 // Importe o CustomHeader (mantenha se você usa)
 import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste este caminho
@@ -12,7 +24,7 @@ import ReadQRCode from '../../components/ReadQRCode'; // Ajuste este caminho
 
 // Defina a URL base da sua API.
 // SUBSTITUA 'http://YOUR_API_BASE_URL' PELA URL REAL DO SEU BACKEND!
-const API_BASE_URL = 'http://34.151.200.231:3000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Event {
   id: string;
@@ -67,7 +79,11 @@ export default function AdminScreen() {
                 const imageData = await imageResponse.json();
                 imageUrl = imageData.imageUrl;
               } else {
-                console.warn(`Não foi possível obter a imagem para o evento ${event.id}:`, imageResponse.status, await imageResponse.text());
+                console.warn(
+                  `Não foi possível obter a imagem para o evento ${event.id}:`,
+                  imageResponse.status,
+                  await imageResponse.text()
+                );
                 // Fallback para imagem local se a URL assinada não for obtida
                 imageUrl = undefined;
               }
@@ -83,8 +99,8 @@ export default function AdminScreen() {
       );
       setEvents(eventsWithImages);
     } catch (e: any) {
-      console.error("Falha ao buscar eventos:", e);
-      setError(e.message || "Erro ao carregar eventos.");
+      console.error('Falha ao buscar eventos:', e);
+      setError(e.message || 'Erro ao carregar eventos.');
     } finally {
       setLoading(false);
     }
@@ -149,7 +165,7 @@ export default function AdminScreen() {
       });
       fetchEvents(); // Recarrega a lista de eventos após a criação
     } catch (e: any) {
-      console.error("Erro ao criar evento:", e);
+      console.error('Erro ao criar evento:', e);
       Alert.alert('Erro', e.message || 'Não foi possível criar o evento. Tente novamente.');
     }
   };
@@ -166,11 +182,13 @@ export default function AdminScreen() {
       'A funcionalidade de ativar/desativar eventos é apenas visual neste momento. Não está conectada ao backend para alteração de status de evento.',
       [{ text: 'OK' }]
     );
-    setEvents(events.map(event =>
-      event.id === eventId
-        ? { ...event, status: currentStatus === 'ativo' ? 'inativo' : 'ativo' }
-        : event
-    ));
+    setEvents(
+      events.map((event) =>
+        event.id === eventId
+          ? { ...event, status: currentStatus === 'ativo' ? 'inativo' : 'ativo' }
+          : event
+      )
+    );
   };
 
   const deleteEvent = async (eventId: string) => {
@@ -198,8 +216,11 @@ export default function AdminScreen() {
               Alert.alert('Sucesso', 'Evento excluído com sucesso!');
               fetchEvents(); // Recarrega a lista de eventos
             } catch (e: any) {
-              console.error("Erro ao excluir evento:", e);
-              Alert.alert('Erro', e.message || 'Não foi possível excluir o evento. Tente novamente.');
+              console.error('Erro ao excluir evento:', e);
+              Alert.alert(
+                'Erro',
+                e.message || 'Não foi possível excluir o evento. Tente novamente.'
+              );
             }
           },
         },
@@ -211,13 +232,13 @@ export default function AdminScreen() {
   const handleEventPress = (eventId: string) => {
     router.push({
       pathname: '/eventdescriptionadmin',
-      params: { eventId }
+      params: { eventId },
     });
   };
 
   // Função para lidar com a leitura do QR Code vinda do componente
   const handleQrCodeRead = async (qrCodeData: string) => {
-    console.log("QR Code Lido na AdminScreen:", qrCodeData);
+    console.log('QR Code Lido na AdminScreen:', qrCodeData);
     setIsScannerVisible(false); // Fechar o scanner
     setValidationVisible(true); // Mostrar o modal de validação
     setValidationStatus(null); // Resetar status de validação para mostrar ActivityIndicator
@@ -233,7 +254,7 @@ export default function AdminScreen() {
         setValidationStatus('fail');
       }
     } catch (e) {
-      console.error("Erro ao validar ticket:", e);
+      console.error('Erro ao validar ticket:', e);
       setValidationStatus('fail'); // Em caso de erro na requisição, consideramos falha
     } finally {
       // Esconde o modal de validação após 3 segundos, independentemente do resultado
@@ -249,27 +270,30 @@ export default function AdminScreen() {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        return "Data inválida";
+        return 'Data inválida';
       }
       // O `Intl.DateTimeFormatOptions` permite formatar a data de forma localizada.
       const options: Intl.DateTimeFormatOptions = {
         weekday: 'long', // Dia da semana por extenso (ex: "terça-feira")
-        day: '2-digit',   // Dia do mês (ex: "14")
-        month: 'short',   // Mês abreviado (ex: "Out.")
-        hour: '2-digit',  // Hora (ex: "13")
-        minute: '2-digit',// Minuto (ex: "00")
+        day: '2-digit', // Dia do mês (ex: "14")
+        month: 'short', // Mês abreviado (ex: "Out.")
+        hour: '2-digit', // Hora (ex: "13")
+        minute: '2-digit', // Minuto (ex: "00")
       };
-      return `${date.toLocaleDateString('pt-BR', options)} • ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+      return `${date.toLocaleDateString('pt-BR', options)} • ${date.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`;
     } catch (e) {
-      console.error("Erro ao formatar data:", dateString, e);
-      return "Data inválida";
+      console.error('Erro ao formatar data:', dateString, e);
+      return 'Data inválida';
     }
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#006db2" />
+        <ActivityIndicator size='large' color='#006db2' />
         <Text style={styles.loadingText}>Carregando eventos...</Text>
       </View>
     );
@@ -297,11 +321,8 @@ export default function AdminScreen() {
             <Text style={styles.sectionTitle}>Gerenciamento de Eventos</Text>
 
             {/* Botão de Criar Evento */}
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => setModalVisible(true)}
-            >
-              <Ionicons name="add-circle" size={24} color="white" />
+            <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
+              <Ionicons name='add-circle' size={24} color='white' />
               <Text style={styles.createButtonText}>Criar Novo Evento</Text>
             </TouchableOpacity>
 
@@ -316,7 +337,7 @@ export default function AdminScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.qrCodeButtonGradient}
               >
-                <Ionicons name="qr-code-outline" size={24} color="white" />
+                <Ionicons name='qr-code-outline' size={24} color='white' />
                 <Text style={styles.qrCodeButtonText}>Ler QR Code</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -325,33 +346,39 @@ export default function AdminScreen() {
             <Text style={styles.eventsTitle}>Eventos Cadastrados</Text>
 
             {events.length === 0 ? (
-              <Text style={styles.noEventsText}>Nenhum evento encontrado. Crie um novo evento!</Text>
+              <Text style={styles.noEventsText}>
+                Nenhum evento encontrado. Crie um novo evento!
+              </Text>
             ) : (
-              events.map(event => (
-                <TouchableOpacity
-                  key={event.id}
-                  onPress={() => handleEventPress(event.id)}
-                >
-                  <View style={[
-                    styles.eventCard,
-                    event.status === 'inativo' && styles.inactiveEvent
-                  ]}>
+              events.map((event) => (
+                <TouchableOpacity key={event.id} onPress={() => handleEventPress(event.id)}>
+                  <View
+                    style={[styles.eventCard, event.status === 'inativo' && styles.inactiveEvent]}
+                  >
                     {/* Exibe a imagem carregada do S3 ou uma imagem local de fallback */}
                     <Image
-                      source={event.imageUrl ? { uri: event.imageUrl } : require('../../assets/images/festajunina.jpg')}
+                      source={
+                        event.imageUrl
+                          ? { uri: event.imageUrl }
+                          : require('../../assets/images/festajunina.jpg')
+                      }
                       style={styles.eventImage}
                     />
                     <View style={styles.eventInfo}>
                       <Text style={styles.eventTitle}>{event.name}</Text>
                       <View style={styles.eventDetail}>
-                        <Ionicons name="calendar" size={16} color="#666" />
-                        <Text style={styles.eventText}>{event.location} | {formatDateTimeForDisplay(event.date_time)}</Text>
+                        <Ionicons name='calendar' size={16} color='#666' />
+                        <Text style={styles.eventText}>
+                          {event.location} | {formatDateTimeForDisplay(event.date_time)}
+                        </Text>
                       </View>
                       <View style={styles.eventStatusContainer}>
-                        <View style={[
-                          styles.eventStatus,
-                          event.status === 'ativo' ? styles.activeStatus : styles.inactiveStatus
-                        ]}>
+                        <View
+                          style={[
+                            styles.eventStatus,
+                            event.status === 'ativo' ? styles.activeStatus : styles.inactiveStatus,
+                          ]}
+                        >
                           <Text style={styles.eventStatusText}>
                             {event.status === 'ativo' ? 'Ativo' : 'Inativo'}
                           </Text>
@@ -370,7 +397,7 @@ export default function AdminScreen() {
                         <Ionicons
                           name={event.status === 'ativo' ? 'eye-off' : 'eye'}
                           size={20}
-                          color="#007AFF"
+                          color='#007AFF'
                         />
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -380,7 +407,7 @@ export default function AdminScreen() {
                           deleteEvent(event.id);
                         }}
                       >
-                        <Ionicons name="trash" size={20} color="#FF3B30" />
+                        <Ionicons name='trash' size={20} color='#FF3B30' />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -392,7 +419,7 @@ export default function AdminScreen() {
 
         {/* Modal do Formulário para Criar Evento */}
         <Modal
-          animationType="slide"
+          animationType='slide'
           transparent={false}
           visible={modalVisible}
           onRequestClose={() => setModalVisible(false)}
@@ -404,8 +431,11 @@ export default function AdminScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.modalHeader}
             >
-              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
-                <Ionicons name="close" size={28} color="white" />
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <Ionicons name='close' size={28} color='white' />
               </TouchableOpacity>
               <Text style={styles.modalHeaderText}>Criar Novo Evento</Text>
             </LinearGradient>
@@ -414,7 +444,7 @@ export default function AdminScreen() {
                 <Text style={styles.label}>Título do Evento</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Nome do Evento"
+                  placeholder='Nome do Evento'
                   value={eventData.title}
                   onChangeText={(text) => handleInputChange('title', text)}
                 />
@@ -423,7 +453,7 @@ export default function AdminScreen() {
                 <Text style={styles.label}>Descrição</Text>
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Detalhes completos do evento"
+                  placeholder='Detalhes completos do evento'
                   multiline
                   value={eventData.description}
                   onChangeText={(text) => handleInputChange('description', text)}
@@ -433,7 +463,7 @@ export default function AdminScreen() {
                 <Text style={styles.label}>Data e Hora</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex: 2025-10-14T13:00:00 (Formato ISO)"
+                  placeholder='Ex: 2025-10-14T13:00:00 (Formato ISO)'
                   value={eventData.date}
                   onChangeText={(text) => handleInputChange('date', text)}
                 />
@@ -442,7 +472,7 @@ export default function AdminScreen() {
                 <Text style={styles.label}>Localização</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex: Goiânia - GO"
+                  placeholder='Ex: Goiânia - GO'
                   value={eventData.location}
                   onChangeText={(text) => handleInputChange('location', text)}
                 />
@@ -458,25 +488,25 @@ export default function AdminScreen() {
         <Modal
           visible={validationVisible}
           transparent={true}
-          animationType="fade"
+          animationType='fade'
           onRequestClose={() => setValidationVisible(false)}
         >
           <View style={styles.validationContainer}>
             <View style={styles.validationContent}>
               {validationStatus === 'success' && (
                 <>
-                  <AntDesign name="checkcircle" size={80} color="#4CAF50" />
+                  <AntDesign name='checkcircle' size={80} color='#4CAF50' />
                   <Text style={styles.validationText}>Ingresso validado!</Text>
                 </>
               )}
               {validationStatus === 'fail' && (
                 <>
-                  <AntDesign name="closecircle" size={80} color="#FF3B30" />
+                  <AntDesign name='closecircle' size={80} color='#FF3B30' />
                   <Text style={styles.validationText}>Ingresso inválido ou já utilizado!</Text>
                 </>
               )}
               {validationStatus === null && ( // Enquanto aguarda a resposta da API
-                <ActivityIndicator size="large" color="#006db2" />
+                <ActivityIndicator size='large' color='#006db2' />
               )}
             </View>
           </View>
@@ -488,7 +518,6 @@ export default function AdminScreen() {
           onClose={() => setIsScannerVisible(false)}
           onQRCodeRead={handleQrCodeRead}
         />
-
       </SafeAreaView>
     </View>
   );
@@ -516,7 +545,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333',
-    textAlign: "center"
+    textAlign: 'center',
   },
   createButton: {
     flexDirection: 'row',
@@ -757,5 +786,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#666',
-  }
+  },
 });
