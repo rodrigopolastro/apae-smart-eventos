@@ -1,360 +1,236 @@
 import { Ionicons } from '@expo/vector-icons';
+import NetInfo from '@react-native-community/netinfo';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Dimensions,
-  Image,
+  ActivityIndicator,
+  Alert,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+
+import QRCodeModal from '@/components/QRCodeModal';
+import { useAuthStore } from '@/hooks/useAuthStore'; // 1. Importar a loja de autenticação
 import api from '../../api';
+import CustomHeader from '../../components/CustomHeaderLogin';
 import formatDate from '../../helpers/formatDate';
-
-// Importe o novo componente de cabeçalho
-import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste o caminho conforme sua estrutura de pastas
-import { TicketPdfModal } from '../../components/TicketPdfModal';
-
-const { width } = Dimensions.get('window');
-
-function convertBlobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        // Remove the "data:*/*;base64," prefix
-        const base64 = result.split(',')[1];
-        resolve(base64);
-      } else {
-        reject(new Error('Unexpected result from FileReader.'));
-      }
-    };
-
-    reader.onerror = (err) => {
-      reject(err);
-    };
-
-    reader.readAsDataURL(blob);
-  });
-}
+import { database, LocalTicket } from '../../services/database';
 
 export default function MyTicketsScreen() {
   const router = useRouter();
-  const [userTickets, setUserTickets] = useState<any[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [fileUri, setFileUri] = useState<string | null>('');
+  const { user } = useAuthStore(); // 2. Obter o usuário logado da loja
+
+  const [userTickets, setUserTickets] = useState<LocalTicket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
+  const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<LocalTicket | null>(null);
 
   useEffect(() => {
-    const fetchUserTickets = async () => {
-      try {
-        const loggedUserId = 3;
-        const response = await api.get(`/users/${loggedUserId}/tickets`);
-        console.log(response.data);
-        setUserTickets(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar os ingressos do usuário:', error);
-      }
-    };
-    fetchUserTickets();
+    database.initDatabase();
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const offline = !(state.isConnected && state.isInternetReachable);
+      setIsOffline(offline);
+      // O fetch agora depende do 'user', então o adicionamos como dependência do useEffect
+    });
+    return () => unsubscribe();
   }, []);
 
-  const handleBackPress = () => {
-    router.back();
+  // Adicionamos um novo useEffect para rodar o fetchTickets sempre que o usuário mudar (ex: ao logar)
+  useEffect(() => {
+    fetchTickets(isOffline);
+  }, [user, isOffline]);
+
+  // 3. Função fetchTickets corrigida para usar o ID do usuário dinâmico
+  const fetchTickets = async (offline: boolean) => {
+    setLoading(true);
+
+    // Se não houver usuário logado, não há o que buscar.
+    if (!user) {
+      setUserTickets([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (offline) {
+        const localTickets = await database.getLocalTickets();
+        setUserTickets(localTickets);
+      } else {
+        const loggedUserId = user.id; // <-- USA O ID DO USUÁRIO REAL
+        const response = await api.get(`/users/${loggedUserId}/tickets`);
+        const apiTickets: LocalTicket[] = response.data;
+        setUserTickets(apiTickets);
+        database.saveTickets(apiTickets); // Salva os ingressos mais recentes no cache local
+      }
+    } catch (error) {
+      console.error('Erro ao buscar ingressos:', error);
+      try {
+        const localTickets = await database.getLocalTickets();
+        if (localTickets.length > 0) {
+          setUserTickets(localTickets);
+          Alert.alert("Erro de Conexão", "Não foi possível atualizar. Exibindo ingressos salvos.");
+        }
+      } catch (dbError) {
+        console.error("Erro ao buscar ingressos do DB local:", dbError);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleViewEvent = (eventId: string) => {
-    router.push({ pathname: '/eventdescriptionlogado', params: { eventId } });
+  const handleViewQRCode = (ticket: LocalTicket) => {
+    setSelectedTicket(ticket);
+    setQrCodeModalVisible(true);
   };
-
-  const handleViewQRCode = async (ticketQrCodeId: string) => {
-    const response = await api.get(`/tickets/${ticketQrCodeId}/printTicket`, {
-      responseType: 'blob',
-    });
-
-    const base64Pdf = await convertBlobToBase64(response.data);
-    const myUri = `data:application/pdf;base64,${base64Pdf}`;
-
-    await Print.printAsync({ uri: myUri });
-  };
-
-  const getTicketTypeColor = (type: string) => {
-    const colors: { [key: string]: string } = {
-      VIP: '#FF9500',
-      Normal: '#007AFF',
-      Meia: '#34C759',
-    };
-    return colors[type] || '#007AFF';
-  };
-
-  const totalValue = userTickets.reduce((sum, ticket) => sum + ticket.price, 0);
 
   return (
     <View style={styles.container}>
-      <TicketPdfModal
-        isModalVisible={isModalVisible}
-        setIsModalVisible={setIsModalVisible}
-        fileUri={fileUri}
-      />
-      <StatusBar barStyle='light-content' backgroundColor='transparent' translucent />
-
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        {/* Adicione o CustomHeader aqui */}
-        <CustomHeader />
-
-        {/* Padding superior para garantir que o conteúdo não fique escondido atrás do cabeçalho */}
-        <View style={styles.contentPaddingTop}>
-          {/* Badge de status */}
-          <View style={styles.sectionHeader}>
-            <View style={styles.badgeContainer}>
-              <LinearGradient
-                colors={['#4CAF50', '#8BC34A']}
-                style={styles.badge}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.badgeText}>✅ Ingressos Ativos</Text>
-              </LinearGradient>
-            </View>
-            <Text style={styles.sectionSubtitle}>Toque para ver detalhes ou QR Code</Text>
-          </View>
-
-          {/* Lista de Ingressos - estilo similar aos eventos */}
-          <View style={styles.ticketsSection}>
-            {userTickets.map((ticket, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.ticketCard}
-                onPress={() => handleViewEvent(ticket.eventId)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.cardImageContainer}>
-                  <Image source={ticket.eventImage} style={styles.ticketImage} />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.7)']}
-                    style={styles.imageOverlay}
-                  />
-
-                  {/* Badge do tipo de ingresso */}
-                  <View style={styles.ticketTypeBadge}>
-                    <Text
-                      style={[
-                        styles.ticketTypeText,
-                        { backgroundColor: getTicketTypeColor(ticket.ticketTypeId) },
-                      ]}
-                    >
-                      {ticket.type}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.cardContent}>
-                  <Text style={styles.eventTitle} numberOfLines={2}>
-                    {ticket.eventName}
-                  </Text>
-
-                  <View style={styles.eventDetails}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📍</Text>
-                      <Text style={styles.detailText} numberOfLines={1}>
-                        {ticket.eventLocation}
-                      </Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📅</Text>
-                      <Text style={styles.detailText}>{formatDate(ticket.eventDateTime)}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>💰</Text>
-                      <Text style={styles.detailText}>
-                        {ticket.price.toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>🛒</Text>
-                      <Text style={styles.detailText}>
-                        Comprado em {formatDate(ticket.purchasedAt)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Botão QR Code */}
-                  <TouchableOpacity
-                    style={styles.qrCodeButton}
-                    onPress={() => handleViewQRCode(ticket.qrCodeId)}
-                  >
-                    <LinearGradient colors={['#667eea', '#764ba2']} style={styles.qrCodeGradient}>
-                      <Ionicons name='qr-code' size={20} color='#fff' />
-                      <Text style={styles.qrCodeButtonText}>Ver QR Code</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+      <CustomHeader />
+      {isOffline && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineBannerText}>Você está offline</Text>
         </View>
+      )}
+      <ScrollView>
+        {loading ? (
+          <ActivityIndicator size="large" color="#667eea" style={{ marginTop: 50 }} />
+        ) : userTickets.length > 0 ? (
+          userTickets.map((ticket) => ( // Removido o 'index' desnecessário
+            <View key={ticket.ticketId} style={styles.ticketCard}>
+              <View style={styles.ticketInfoContainer}>
+                <Text style={styles.eventName}>{ticket.eventName}</Text>
+                <Text style={styles.ticketType}>{ticket.ticketType}</Text>
+                <View style={styles.divider} />
+                <View style={styles.detailRow}>
+                    <Ionicons name="person-outline" size={16} color="#555" />
+                    <Text style={styles.detailText}>{ticket.userName}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                    <Ionicons name="location-outline" size={16} color="#555" />
+                    <Text style={styles.detailText}>{ticket.eventLocation}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                    <Ionicons name="calendar-outline" size={16} color="#555" />
+                    <Text style={styles.detailText}>{formatDate(ticket.purchasedAt)}</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.qrCodeButton}
+                onPress={() => handleViewQRCode(ticket)}
+              >
+                <LinearGradient colors={['#667eea', '#764ba2']} style={styles.qrCodeGradient}>
+                  <Ionicons name='qr-code' size={20} color='#fff' />
+                  <Text style={styles.qrCodeButtonText}>Ver QR Code</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          ))
+        ) : (
+          <View style={styles.noTicketsContainer}>
+            <Text style={styles.noTicketsText}>
+              {user ? "Você ainda não possui ingressos." : "Faça login para ver seus ingressos."}
+            </Text>
+          </View>
+        )}
       </ScrollView>
+
+      {selectedTicket && (
+        <QRCodeModal
+          isVisible={qrCodeModalVisible}
+          onClose={() => setQrCodeModalVisible(false)}
+          ticket={selectedTicket}
+        />
+      )}
     </View>
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    marginTop: 50,
+    backgroundColor: '#f4f4f8',
   },
-  body: {
-    flex: 1,
-  },
-  // Adicionado padding superior para o conteúdo abaixo do cabeçalho
-  contentPaddingTop: {
-    paddingTop: 65, // Ajuste este valor se o cabeçalho cobrir o conteúdo. Este valor empurra o conteúdo para baixo.
-  },
-  sectionHeader: {
+  offlineBanner: {
+    backgroundColor: '#ffc107',
+    padding: 8,
     alignItems: 'center',
-    marginBottom: 25,
-    paddingHorizontal: 20,
   },
-  badgeContainer: {
-    marginBottom: 8,
-  },
-  badge: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  badgeText: {
-    fontSize: 18,
+  offlineBannerText: {
+    color: '#000',
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  sectionSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  ticketsSection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
   },
   ticketCard: {
     backgroundColor: '#fff',
-    borderRadius: 20,
-    marginBottom: 16,
-    elevation: 8,
+    borderRadius: 15,
+    marginVertical: 10,
+    marginHorizontal: 15,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 8,
+    elevation: 5,
     overflow: 'hidden',
   },
-  cardImageContainer: {
-    position: 'relative',
-    height: 180,
-  },
-  ticketImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-  },
-  categoryBadge: {
-    position: 'absolute',
-    top: 15,
-    left: 15,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  ticketTypeBadge: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-  },
-  ticketTypeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  cardContent: {
+  ticketInfoContainer: {
     padding: 20,
   },
-  eventTitle: {
-    fontSize: 20,
+  eventName: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 12,
-    lineHeight: 24,
+    color: '#333',
+    marginBottom: 5,
   },
-  eventDetails: {
-    gap: 8,
-    marginBottom: 16,
+  ticketType: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#667eea',
+    marginBottom: 15,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 10,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  detailIcon: {
-    fontSize: 14,
-    marginRight: 8,
-    width: 20,
+    marginTop: 8,
   },
   detailText: {
     fontSize: 14,
-    color: '#7f8c8d',
-    flex: 1,
+    color: '#555',
+    marginLeft: 10,
   },
-  qrCodeButton: {
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
+  qrCodeButton: {},
   qrCodeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 15,
   },
   qrCodeButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-    marginLeft: 8,
+    marginLeft: 10,
+  },
+  noTicketsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    marginTop: '40%',
+  },
+  noTicketsText: {
+    color: '#888',
+    fontSize: 18,
+    textAlign: 'center'
   },
 });
