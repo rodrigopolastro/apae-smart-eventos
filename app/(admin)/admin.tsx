@@ -19,10 +19,7 @@ import {
 } from 'react-native';
 import api from '../../api'; // Importe a instância do Axios configurada
 
-// Importe o CustomHeader (mantenha se você usa)
 import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste este caminho
-
-// Importe o novo componente de scanner
 
 // Defina a URL base da sua API.
 // SUBSTITUA 'http://YOUR_API_BASE_URL' PELA URL REAL DO SEU BACKEND!
@@ -43,7 +40,7 @@ interface Event {
 export default function AdminScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const router = useRouter();
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false); // Modal para criar evento
   const [events, setEvents] = useState<Event[]>([]);
   const [eventData, setEventData] = useState({
     title: '',
@@ -51,13 +48,14 @@ export default function AdminScreen() {
     date: '', // Corresponde a date_time no backend. Ex: "2025-10-14T13:00:00"
     location: '',
   });
-  const [isScannerVisible, setIsScannerVisible] = useState(false);
-  const [modalIsVisible, setModalIsVisible] = useState(false);
-  const [validationVisible, setValidationVisible] = useState(false);
-  const [validationStatus, setValidationStatus] = useState<'success' | 'fail' | null>(null);
+  const [isScannerVisible, setIsScannerVisible] = useState(false); // Agora não é usado diretamente, use modalIsVisible
+  const [modalIsVisible, setModalIsVisible] = useState(false); // Modal da câmera/scanner
+  const [validationVisible, setValidationVisible] = useState(false); // Novo modal para feedback de validação
+  const [validationStatus, setValidationStatus] = useState<'success' | 'fail' | null>(null); // Status da validação
+  const [validationMessage, setValidationMessage] = useState<string>(''); // Mensagem para o modal de validação
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const qrCodeLock = useRef(false);
+  const qrCodeLock = useRef(false); // Trava para evitar múltiplas leituras rápidas
 
   // Função para buscar eventos do backend
   const fetchEvents = async () => {
@@ -68,15 +66,11 @@ export default function AdminScreen() {
       if (!response.ok) {
         throw new Error(`Erro ao carregar eventos: ${response.status}`);
       }
-      // Omitimos 'status' e 'imageUrl' da tipagem inicial da resposta JSON,
-      // pois eles serão adicionados no frontend.
       const data: Omit<Event, 'status' | 'imageUrl'>[] = await response.json();
 
-      // Para cada evento, buscar a URL da imagem de capa e adicionar status de frontend
       const eventsWithImages = await Promise.all(
         data.map(async (event) => {
           let imageUrl;
-          // Verifica se existem informações de bucket e path para tentar buscar a imagem
           if (event.cover_image_bucket && event.cover_image_path) {
             try {
               const imageResponse = await fetch(`${API_BASE_URL}/events/${event.id}/imageUrl`);
@@ -89,16 +83,13 @@ export default function AdminScreen() {
                   imageResponse.status,
                   await imageResponse.text()
                 );
-                // Fallback para imagem local se a URL assinada não for obtida
                 imageUrl = undefined;
               }
             } catch (imgError) {
               console.error(`Erro ao buscar imagem para o evento ${event.id}:`, imgError);
-              imageUrl = undefined; // Garante que a URL seja undefined em caso de erro
+              imageUrl = undefined;
             }
           }
-          // Por padrão, todos os eventos do backend são considerados 'ativos' para fins de listagem aqui
-          // O 'as' é um type assertion para garantir que o TypeScript reconheça 'ativo' como o literal 'ativo'
           return { ...event, imageUrl, status: 'ativo' as 'ativo' | 'inativo' };
         })
       );
@@ -124,30 +115,65 @@ export default function AdminScreen() {
 
   async function handleQRCodeRead(data: string) {
     if (qrCodeLock.current) {
-      return;
+      return; // Se a trava estiver ativa, ignora leituras subsequentes
     }
-    qrCodeLock.current = true;
-    setModalIsVisible(false);
-    const response = await api.get(`/tickets/${data}/validateTicket`);
-    const isTicketValid = response.data.isTicketValid;
+    qrCodeLock.current = true; // Ativa a trava
+    setModalIsVisible(false); // Fecha o modal do scanner imediatamente
+    setValidationVisible(true); // Abre o modal de validação para feedback
 
-    let alertTitle, alertMessage;
-    if (isTicketValid) {
-      alertTitle = 'Ingresso Aprovado';
-      alertMessage = 'Seja muito-bem vindo!';
-    } else {
-      alertTitle = 'Ingresso Inválido';
-      alertMessage = 'Ingresso inválido ou já utilizado.';
+    let currentValidationStatus: 'success' | 'fail' = 'fail';
+    let currentValidationMessage: string = 'Erro desconhecido.';
+
+    try {
+      // 1. Primeiro, valida o ticket
+      const validationResponse = await api.get(`/tickets/${data}/validateTicket`);
+      const isTicketValid = validationResponse.data.isTicketValid;
+
+      if (isTicketValid) {
+        // 2. Se o ticket é válido, tenta usá-lo (invalidá-lo)
+        try {
+          const useTicketResponse = await api.post(`/tickets/${data}/useTicket`);
+          // Se a requisição POST for bem-sucedida (status 2xx), o ticket foi usado.
+          currentValidationStatus = 'success';
+          currentValidationMessage = 'Ingresso Aprovado! Seja muito bem-vindo!';
+        } catch (useError: any) {
+          // Captura erros específicos da rota useTicket (ex: 409 Conflict - já usado)
+          if (useError.response && useError.response.status === 409) {
+            currentValidationStatus = 'fail';
+            currentValidationMessage = 'Este ingresso já foi utilizado anteriormente.';
+          } else if (useError.response && useError.response.data && useError.response.data.message) {
+            currentValidationStatus = 'fail';
+            currentValidationMessage = `Erro ao usar ingresso: ${useError.response.data.message}`;
+          } else {
+            currentValidationStatus = 'fail';
+            currentValidationMessage = 'Ocorreu um erro inesperado ao usar o ingresso.';
+          }
+          console.error('Erro ao usar ticket (POST):', useError);
+        }
+      } else {
+        // Se a validação inicial falhou (ticket inválido ou não encontrado)
+        currentValidationStatus = 'fail';
+        currentValidationMessage = 'Ingresso inválido ou não encontrado.';
+      }
+    } catch (error: any) {
+      // Captura erros gerais da validação (ex: erro de rede, erro 500 do servidor)
+      console.error('Erro na validação do ticket (GET):', error);
+      currentValidationStatus = 'fail';
+      currentValidationMessage = 'Não foi possível verificar o ingresso. Verifique sua conexão ou tente novamente.';
+      if (error.response && error.response.data && error.response.data.message) {
+         currentValidationMessage = error.response.data.message; // Usa a mensagem de erro do backend se disponível
+      }
+    } finally {
+      // Define os estados para exibir o resultado no modal de validação
+      setValidationStatus(currentValidationStatus);
+      setValidationMessage(currentValidationMessage);
+
+      // Fecha o modal de validação após um tempo e libera a trava
+      setTimeout(() => {
+        setValidationVisible(false);
+        qrCodeLock.current = false; // Libera a trava após o feedback
+      }, 3000); // Exibe o status por 3 segundos
     }
-
-    Alert.alert(alertTitle, alertMessage, [
-      {
-        text: 'OK',
-        onPress: () => {
-          qrCodeLock.current = false;
-        },
-      },
-    ]);
   }
 
   const handleSubmit = async () => {
@@ -156,21 +182,15 @@ export default function AdminScreen() {
       return;
     }
 
-    // Preparar os dados para o backend
     const newEventForBackend = {
       name: eventData.title,
       description: eventData.description,
-      // Adapte a data para o formato DATETIME do MySQL.
-      // É crucial que o formato da entrada seja reconhecido por `new Date()`.
-      // Recomenda-se ISO 8601 (e.g., "YYYY-MM-DDTHH:MM:SS").
       date_time: new Date(eventData.date).toISOString(),
       location: eventData.location,
-      // cover_image_bucket e cover_image_path seriam definidos aqui se você tivesse upload de imagem real.
-      // Por enquanto, use placeholders que o backend aceite.
       cover_image_bucket: 'event-covers-apaecuritiba', // Substitua pelo seu bucket real do S3
       cover_image_path: 'placeholder.jpg', // Substitua por um path padrão válido no S3
-      duration_minutes: 60, // Exemplo: Adicione ao formulário se precisar ser variável
-      event_type: 'public', // Exemplo: Adicione ao formulário se precisar ser variável
+      duration_minutes: 60,
+      event_type: 'public',
     };
 
     try {
@@ -195,7 +215,7 @@ export default function AdminScreen() {
         date: '',
         location: '',
       });
-      fetchEvents(); // Recarrega a lista de eventos após a criação
+      fetchEvents();
     } catch (e: any) {
       console.error('Erro ao criar evento:', e);
       Alert.alert('Erro', e.message || 'Não foi possível criar o evento. Tente novamente.');
@@ -203,12 +223,6 @@ export default function AdminScreen() {
   };
 
   const toggleEventStatus = async (eventId: string, currentStatus: 'ativo' | 'inativo') => {
-    // ATENÇÃO: Esta função é atualmente APENAS VISUAL no frontend.
-    // Seu backend não tem uma rota direta para mudar o status de um evento (ativo/inativo).
-    // Se você quiser que essa funcionalidade afete o backend, você precisará:
-    // 1. Criar uma nova coluna (ex: `is_active` BOOLEAN) na sua tabela `events`.
-    // 2. Criar uma rota PUT/PATCH no backend (ex: `/events/:id/status`) para atualizar essa coluna.
-    // 3. Modificar esta função para chamar essa rota do backend.
     Alert.alert(
       'Atenção',
       'A funcionalidade de ativar/desativar eventos é apenas visual neste momento. Não está conectada ao backend para alteração de status de evento.',
@@ -246,7 +260,7 @@ export default function AdminScreen() {
               }
 
               Alert.alert('Sucesso', 'Evento excluído com sucesso!');
-              fetchEvents(); // Recarrega a lista de eventos
+              fetchEvents();
             } catch (e: any) {
               console.error('Erro ao excluir evento:', e);
               Alert.alert(
@@ -283,20 +297,18 @@ export default function AdminScreen() {
     }
   }
 
-  // Função auxiliar para formatar a data/hora para exibição
   const formatDateTimeForDisplay = (dateString: string) => {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
         return 'Data inválida';
       }
-      // O `Intl.DateTimeFormatOptions` permite formatar a data de forma localizada.
       const options: Intl.DateTimeFormatOptions = {
-        weekday: 'long', // Dia da semana por extenso (ex: "terça-feira")
-        day: '2-digit', // Dia do mês (ex: "14")
-        month: 'short', // Mês abreviado (ex: "Out.")
-        hour: '2-digit', // Hora (ex: "13")
-        minute: '2-digit', // Minuto (ex: "00")
+        weekday: 'long',
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
       };
       return `${date.toLocaleDateString('pt-BR', options)} • ${date.toLocaleTimeString('pt-BR', {
         hour: '2-digit',
@@ -332,19 +344,16 @@ export default function AdminScreen() {
     <View style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Adicione o CustomHeader aqui (se estiver usando) */}
           <CustomHeader />
 
           <View style={styles.adminContentWrapper}>
             <Text style={styles.sectionTitle}>Gerenciamento de Eventos</Text>
 
-            {/* Botão de Criar Evento */}
             <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
               <Ionicons name='add-circle' size={24} color='white' />
               <Text style={styles.createButtonText}>Criar Novo Evento</Text>
             </TouchableOpacity>
 
-            {/* BOTÃO: Ler QR Code (que agora abre o componente local) */}
             <TouchableOpacity onPress={handleOpenCamera} style={styles.qrCodeButton}>
               <LinearGradient
                 colors={['#4CAF50', '#8BC34A']}
@@ -356,22 +365,7 @@ export default function AdminScreen() {
                 <Text style={styles.qrCodeButtonText}>Ler QR Code</Text>
               </LinearGradient>
             </TouchableOpacity>
-            {/* <TouchableOpacity
-              style={styles.qrCodeButton}
-              onPress={() => setIsScannerVisible(true)} // Apenas define a visibilidade
-            >
-              <LinearGradient
-                colors={['#4CAF50', '#8BC34A']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.qrCodeButtonGradient}
-              >
-                <Ionicons name='qr-code-outline' size={24} color='white' />
-                <Text style={styles.qrCodeButtonText}>Ler QR Code 3</Text>
-              </LinearGradient>
-            </TouchableOpacity> */}
 
-            {/* Lista de Eventos */}
             <Text style={styles.eventsTitle}>Eventos Cadastrados</Text>
 
             {events.length === 0 ? (
@@ -384,7 +378,6 @@ export default function AdminScreen() {
                   <View
                     style={[styles.eventCard, event.status === 'inativo' && styles.inactiveEvent]}
                   >
-                    {/* Exibe a imagem carregada do S3 ou uma imagem local de fallback */}
                     <Image
                       source={
                         event.imageUrl
@@ -419,7 +412,7 @@ export default function AdminScreen() {
                       <TouchableOpacity
                         style={styles.actionButton}
                         onPress={(e) => {
-                          e.stopPropagation(); // Evita que o clique na ação ative o onPress do Card
+                          e.stopPropagation();
                           toggleEventStatus(event.id, event.status || 'ativo');
                         }}
                       >
@@ -432,7 +425,7 @@ export default function AdminScreen() {
                       <TouchableOpacity
                         style={styles.actionButton}
                         onPress={(e) => {
-                          e.stopPropagation(); // Evita que o clique na ação ative o onPress do Card
+                          e.stopPropagation();
                           deleteEvent(event.id);
                         }}
                       >
@@ -513,30 +506,44 @@ export default function AdminScreen() {
           </SafeAreaView>
         </Modal>
 
-        {/* Modal de validação de QR Code */}
+        {/* Modal de Câmera para validação de QR Code */}
         <Modal visible={modalIsVisible} style={{ flex: 1 }}>
           <CameraView
             style={{ flex: 1 }}
             facing='back'
             onBarcodeScanned={({ data }) => {
-              // Apenas chame handleQRCodeRead se a trava não estiver ativada
               if (data && !qrCodeLock.current) {
                 handleQRCodeRead(data);
               }
             }}
           />
-
           <View style={styles.footer}>
             <Button title='Cancelar' onPress={() => setModalIsVisible(false)} />
           </View>
         </Modal>
 
-        {/* O Componente Scanner de QR Code */}
-        {/* <ReadQRCode
-          isVisible={isScannerVisible}
-          onClose={() => setIsScannerVisible(false)}
-          onQRCodeRead={handleQrCodeRead}
-        /> */}
+        {/* Novo Modal de Feedback de Validação (sucesso/falha) */}
+        <Modal
+          animationType='fade'
+          transparent={true}
+          visible={validationVisible}
+          onRequestClose={() => setValidationVisible(false)}
+        >
+          <View style={styles.validationContainer}>
+            <View style={[
+              styles.validationContent,
+              validationStatus === 'success' ? styles.validationSuccess : styles.validationFail
+            ]}>
+              <Ionicons
+                name={validationStatus === 'success' ? 'checkmark-circle' : 'close-circle'}
+                size={80}
+                color={validationStatus === 'success' ? '#28A745' : '#DC3545'}
+              />
+              <Text style={styles.validationText}>{validationMessage}</Text>
+            </View>
+          </View>
+        </Modal>
+
       </SafeAreaView>
     </View>
   );
@@ -581,7 +588,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  // ESTILOS PARA O BOTÃO QR CODE
   qrCodeButton: {
     width: '100%',
     borderRadius: 10,
@@ -606,7 +612,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  // CONTINUAÇÃO DOS ESTILOS
   formContent: {
     padding: 20,
   },
@@ -743,7 +748,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)', // Fundo escurecido
   },
   validationContent: {
     backgroundColor: 'white',
@@ -758,12 +763,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    width: '80%', // Ocupa 80% da largura
+  },
+  validationSuccess: {
+    borderWidth: 2,
+    borderColor: '#28A745',
+  },
+  validationFail: {
+    borderWidth: 2,
+    borderColor: '#DC3545',
   },
   validationText: {
     marginTop: 15,
     textAlign: 'center',
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#333',
   },
   loadingContainer: {
     flex: 1,
