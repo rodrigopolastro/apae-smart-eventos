@@ -1,10 +1,12 @@
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Button,
   Image,
   Modal,
   SafeAreaView,
@@ -15,12 +17,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import api from '../../api'; // Importe a instância do Axios configurada
 
 // Importe o CustomHeader (mantenha se você usa)
 import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste este caminho
 
 // Importe o novo componente de scanner
-import ReadQRCode from '../../components/ReadQRCode'; // Ajuste este caminho
 
 // Defina a URL base da sua API.
 // SUBSTITUA 'http://YOUR_API_BASE_URL' PELA URL REAL DO SEU BACKEND!
@@ -39,6 +41,7 @@ interface Event {
 }
 
 export default function AdminScreen() {
+  const [permission, requestPermission] = useCameraPermissions();
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
@@ -49,10 +52,12 @@ export default function AdminScreen() {
     location: '',
   });
   const [isScannerVisible, setIsScannerVisible] = useState(false);
+  const [modalIsVisible, setModalIsVisible] = useState(false);
   const [validationVisible, setValidationVisible] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'success' | 'fail' | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const qrCodeLock = useRef(false);
 
   // Função para buscar eventos do backend
   const fetchEvents = async () => {
@@ -117,8 +122,35 @@ export default function AdminScreen() {
     });
   };
 
+  async function handleQRCodeRead(data: string) {
+    if (qrCodeLock.current) {
+      return;
+    }
+    qrCodeLock.current = true;
+    setModalIsVisible(false);
+    const response = await api.get(`/tickets/${data}/validateTicket`);
+    const isTicketValid = response.data.isTicketValid;
+
+    let alertTitle, alertMessage;
+    if (isTicketValid) {
+      alertTitle = 'Ingresso Aprovado';
+      alertMessage = 'Seja muito-bem vindo!';
+    } else {
+      alertTitle = 'Ingresso Inválido';
+      alertMessage = 'Ingresso inválido ou já utilizado.';
+    }
+
+    Alert.alert(alertTitle, alertMessage, [
+      {
+        text: 'OK',
+        onPress: () => {
+          qrCodeLock.current = false;
+        },
+      },
+    ]);
+  }
+
   const handleSubmit = async () => {
-    // Validação básica do formulário
     if (!eventData.title || !eventData.description || !eventData.date || !eventData.location) {
       Alert.alert('Erro', 'Preencha todos os campos para criar um evento.');
       return;
@@ -236,34 +268,20 @@ export default function AdminScreen() {
     });
   };
 
-  // Função para lidar com a leitura do QR Code vinda do componente
-  const handleQrCodeRead = async (qrCodeData: string) => {
-    console.log('QR Code Lido na AdminScreen:', qrCodeData);
-    setIsScannerVisible(false); // Fechar o scanner
-    setValidationVisible(true); // Mostrar o modal de validação
-    setValidationStatus(null); // Resetar status de validação para mostrar ActivityIndicator
-
+  async function handleOpenCamera() {
     try {
-      // Faz a requisição para a rota de validação de tickets no backend
-      const response = await fetch(`${API_BASE_URL}/tickets/${qrCodeData}/validateTicket`);
-      const data = await response.json();
+      const { granted } = await requestPermission();
 
-      if (response.ok && data.isTicketValid) {
-        setValidationStatus('success');
-      } else {
-        setValidationStatus('fail');
+      if (!granted) {
+        Alert.alert('Câmera', 'Habilite o uso da câmera para ler o QR Code.');
+        return;
       }
-    } catch (e) {
-      console.error('Erro ao validar ticket:', e);
-      setValidationStatus('fail'); // Em caso de erro na requisição, consideramos falha
-    } finally {
-      // Esconde o modal de validação após 3 segundos, independentemente do resultado
-      setTimeout(() => {
-        setValidationVisible(false);
-        setValidationStatus(null); // Resetar status para próxima validação
-      }, 3000);
+      setModalIsVisible(true);
+      qrCodeLock.current = false; // Resetar a trava ao abrir a câmera
+    } catch (error) {
+      console.log(error);
     }
-  };
+  }
 
   // Função auxiliar para formatar a data/hora para exibição
   const formatDateTimeForDisplay = (dateString: string) => {
@@ -327,7 +345,18 @@ export default function AdminScreen() {
             </TouchableOpacity>
 
             {/* BOTÃO: Ler QR Code (que agora abre o componente local) */}
-            <TouchableOpacity
+            <TouchableOpacity onPress={handleOpenCamera} style={styles.qrCodeButton}>
+              <LinearGradient
+                colors={['#4CAF50', '#8BC34A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.qrCodeButtonGradient}
+              >
+                <Ionicons name='scan' size={24} color='white' />
+                <Text style={styles.qrCodeButtonText}>Ler QR Code</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            {/* <TouchableOpacity
               style={styles.qrCodeButton}
               onPress={() => setIsScannerVisible(true)} // Apenas define a visibilidade
             >
@@ -338,9 +367,9 @@ export default function AdminScreen() {
                 style={styles.qrCodeButtonGradient}
               >
                 <Ionicons name='qr-code-outline' size={24} color='white' />
-                <Text style={styles.qrCodeButtonText}>Ler QR Code</Text>
+                <Text style={styles.qrCodeButtonText}>Ler QR Code 3</Text>
               </LinearGradient>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Lista de Eventos */}
             <Text style={styles.eventsTitle}>Eventos Cadastrados</Text>
@@ -485,39 +514,29 @@ export default function AdminScreen() {
         </Modal>
 
         {/* Modal de validação de QR Code */}
-        <Modal
-          visible={validationVisible}
-          transparent={true}
-          animationType='fade'
-          onRequestClose={() => setValidationVisible(false)}
-        >
-          <View style={styles.validationContainer}>
-            <View style={styles.validationContent}>
-              {validationStatus === 'success' && (
-                <>
-                  <AntDesign name='checkcircle' size={80} color='#4CAF50' />
-                  <Text style={styles.validationText}>Ingresso validado!</Text>
-                </>
-              )}
-              {validationStatus === 'fail' && (
-                <>
-                  <AntDesign name='closecircle' size={80} color='#FF3B30' />
-                  <Text style={styles.validationText}>Ingresso inválido ou já utilizado!</Text>
-                </>
-              )}
-              {validationStatus === null && ( // Enquanto aguarda a resposta da API
-                <ActivityIndicator size='large' color='#006db2' />
-              )}
-            </View>
+        <Modal visible={modalIsVisible} style={{ flex: 1 }}>
+          <CameraView
+            style={{ flex: 1 }}
+            facing='back'
+            onBarcodeScanned={({ data }) => {
+              // Apenas chame handleQRCodeRead se a trava não estiver ativada
+              if (data && !qrCodeLock.current) {
+                handleQRCodeRead(data);
+              }
+            }}
+          />
+
+          <View style={styles.footer}>
+            <Button title='Cancelar' onPress={() => setModalIsVisible(false)} />
           </View>
         </Modal>
 
         {/* O Componente Scanner de QR Code */}
-        <ReadQRCode
+        {/* <ReadQRCode
           isVisible={isScannerVisible}
           onClose={() => setIsScannerVisible(false)}
           onQRCodeRead={handleQrCodeRead}
-        />
+        /> */}
       </SafeAreaView>
     </View>
   );
@@ -786,5 +805,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#666',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 10,
+    alignItems: 'center',
   },
 });
