@@ -1,10 +1,14 @@
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
 import 'react-native-reanimated';
+import { useAuthStore } from '../hooks/useAuthStore'; // 1. Importar a nova loja
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+// Inicializa a autenticação uma vez fora do componente para evitar múltiplas chamadas
+useAuthStore.getState().initializeAuth();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -13,15 +17,18 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    // Async font loading only occurs in development.
     return null;
   }
 
+  // O AuthProvider FOI REMOVIDO. Não é mais necessário.
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name='(admin)' options={{ headerShown: false }} /> 
+        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen name='(associado)' options={{ headerShown: false }} />
+        <Stack.Screen name='(admin)' options={{ headerShown: false }} />
+        <Stack.Screen name='login' options={{ headerShown: false }} />
+        <Stack.Screen name='signup' options={{ headerShown: false }} />
         <Stack.Screen name='+not-found' />
       </Stack>
       <StatusBar style='auto' />

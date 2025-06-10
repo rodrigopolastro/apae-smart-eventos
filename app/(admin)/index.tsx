@@ -1,17 +1,25 @@
+import CustomHeader from '@/components/CustomHeader';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useRouter } from 'expo-router';
-import { StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, NativeSyntheticEvent, NativeScrollEvent, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useRef, useState, useEffect } from 'react';
-import CustomHeader from '@/components/CustomHeader';
-
 
 const { width } = Dimensions.get('window');
 
 // Defina a URL base da sua API.
 // Substitua 'YOUR_API_BASE_URL' pela URL real do seu backend (ex: 'http://localhost:3000' ou o IP da sua máquina se estiver testando em um dispositivo físico).
-const API_BASE_URL = 'http://34.151.200.231:3000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Event {
   id: string;
@@ -38,7 +46,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch(`http://34.151.200.231:3000/events`);
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/events`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -54,7 +62,10 @@ export default function HomeScreen() {
                   const imageData = await imageResponse.json();
                   return { ...event, imageUrl: imageData.imageUrl };
                 } else {
-                  console.warn(`Could not fetch image for event ${event.id}:`, imageResponse.status);
+                  console.warn(
+                    `Could not fetch image for event ${event.id}:`,
+                    imageResponse.status
+                  );
                   return { ...event, imageUrl: undefined }; // Ou um placeholder
                 }
               } catch (imgError) {
@@ -67,8 +78,8 @@ export default function HomeScreen() {
         );
         setEvents(eventsWithImages);
       } catch (e: any) {
-        console.error("Failed to fetch events:", e);
-        setError(e.message || "Failed to load events.");
+        console.error('Failed to fetch events:', e);
+        setError(e.message || 'Failed to load events.');
       } finally {
         setLoading(false);
       }
@@ -115,7 +126,7 @@ export default function HomeScreen() {
     const options: Intl.DateTimeFormatOptions = {
       day: '2-digit',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     };
     return date.toLocaleDateString('pt-BR', options).replace('.', ''); // Ex: "12 Set. 2025"
   };
@@ -128,16 +139,19 @@ export default function HomeScreen() {
       day: '2-digit',
       month: 'short',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     };
-    return date.toLocaleDateString('pt-BR', options) + ' • ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return (
+      date.toLocaleDateString('pt-BR', options) +
+      ' • ' +
+      date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    );
   };
-
 
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#006db2" />
+        <ActivityIndicator size='large' color='#006db2' />
         <ThemedText style={styles.loadingText}>Carregando eventos...</ThemedText>
       </ThemedView>
     );
@@ -147,7 +161,13 @@ export default function HomeScreen() {
     return (
       <ThemedView style={styles.errorContainer}>
         <ThemedText style={styles.errorText}>Erro ao carregar eventos: {error}</ThemedText>
-        <TouchableOpacity style={styles.retryButton} onPress={() => { setLoading(true); setError(null); /* Recarrega os eventos */ }}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setLoading(true);
+            setError(null); /* Recarrega os eventos */
+          }}
+        >
           <ThemedText style={styles.retryButtonText}>Tentar Novamente</ThemedText>
         </TouchableOpacity>
       </ThemedView>
@@ -177,19 +197,29 @@ export default function HomeScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.eventsCarousel}
                   snapToInterval={cardWidth + cardSpacing}
-                  decelerationRate="fast"
+                  decelerationRate='fast'
                   onScroll={handleScroll}
                   scrollEventThrottle={16}
                 >
                   {events.slice(0, 3).map((event, index) => (
-                    <TouchableOpacity key={event.id} style={[styles.eventCard, { marginRight: cardSpacing }]} onPress={() => handleEventPress(event.id)}>
+                    <TouchableOpacity
+                      key={event.id}
+                      style={[styles.eventCard, { marginRight: cardSpacing }]}
+                      onPress={() => handleEventPress(event.id)}
+                    >
                       <Image
-                        source={event.imageUrl ? { uri: event.imageUrl } : require('../../assets/images/festajunina.jpg')} // Fallback para imagem local
+                        source={
+                          event.imageUrl
+                            ? { uri: event.imageUrl }
+                            : require('../../assets/images/festajunina.jpg')
+                        } // Fallback para imagem local
                         style={styles.eventImage}
                       />
                       <ThemedText style={styles.eventCardTitle}>{event.name}</ThemedText>
                       <ThemedText style={styles.eventCardLocation}>{event.location}</ThemedText>
-                      <ThemedText style={styles.eventCardDate}>{formatDate(event.date_time)}</ThemedText>
+                      <ThemedText style={styles.eventCardDate}>
+                        {formatDate(event.date_time)}
+                      </ThemedText>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -214,17 +244,29 @@ export default function HomeScreen() {
             {/* Lista de Todos os Eventos (vertical) */}
             <ThemedView style={styles.allEventsListContainer}>
               <ThemedText style={styles.allEventsListTitle}>Todos os Eventos</ThemedText>
-              {events.map(event => (
-                <TouchableOpacity key={event.id + '-list'} style={styles.listItemCard} onPress={() => handleEventPress(event.id)}>
+              {events.map((event) => (
+                <TouchableOpacity
+                  key={event.id + '-list'}
+                  style={styles.listItemCard}
+                  onPress={() => handleEventPress(event.id)}
+                >
                   <Image
-                    source={event.imageUrl ? { uri: event.imageUrl } : require('../../assets/images/festajunina.jpg')} // Fallback para imagem local
+                    source={
+                      event.imageUrl
+                        ? { uri: event.imageUrl }
+                        : require('../../assets/images/festajunina.jpg')
+                    } // Fallback para imagem local
                     style={styles.listItemImage}
                   />
                   <ThemedView style={styles.listItemTextContent}>
                     <ThemedText style={styles.listItemTitle}>{event.name}</ThemedText>
                     <ThemedText style={styles.listItemLocation}>{event.location}</ThemedText>
-                    <ThemedText style={styles.listItemDate}>{formatDateTime(event.date_time)}</ThemedText>
-                    <ThemedText style={styles.listItemDescription} numberOfLines={2}>{event.description}</ThemedText>
+                    <ThemedText style={styles.listItemDate}>
+                      {formatDateTime(event.date_time)}
+                    </ThemedText>
+                    <ThemedText style={styles.listItemDescription} numberOfLines={2}>
+                      {event.description}
+                    </ThemedText>
                   </ThemedView>
                 </TouchableOpacity>
               ))}
@@ -239,7 +281,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
   },
   safeArea: {
     flex: 1,
@@ -281,7 +323,7 @@ const styles = StyleSheet.create({
   },
   carouselScrollView: {
     flex: 1,
-    paddingHorizontal: (width - (width * 0.85)) / 2,
+    paddingHorizontal: (width - width * 0.85) / 2,
   },
   eventsCarousel: {
     paddingBottom: 20,
