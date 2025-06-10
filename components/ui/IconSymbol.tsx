@@ -17,7 +17,7 @@ const MAPPING = {
   'house.fill': 'home',
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
-  'chevron.right': 'chevron-right',
+  'admin.icon': 'admin-panel-settings',
 } as IconMapping;
 
 /**

@@ -25,13 +25,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name='read-qr-code'
+        name='admin'
         options={{
-          title: 'Ler QR Code',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name='paperplane.fill' color={color} />,
+          title: 'Admin',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name='admin.icon' color={color} />,
         }}
-        />
-  
+      />
     </Tabs>
   );
 }
