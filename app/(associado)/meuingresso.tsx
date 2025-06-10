@@ -22,6 +22,29 @@ import { TicketPdfModal } from '../../components/TicketPdfModal';
 
 const { width } = Dimensions.get('window');
 
+function convertBlobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        // Remove the "data:*/*;base64," prefix
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      } else {
+        reject(new Error('Unexpected result from FileReader.'));
+      }
+    };
+
+    reader.onerror = (err) => {
+      reject(err);
+    };
+
+    reader.readAsDataURL(blob);
+  });
+}
+
 export default function MyTicketsScreen() {
   const router = useRouter();
   const [userTickets, setUserTickets] = useState<any[]>([]);
@@ -33,6 +56,7 @@ export default function MyTicketsScreen() {
       try {
         const loggedUserId = 3;
         const response = await api.get(`/users/${loggedUserId}/tickets`);
+        console.log(response.data);
         setUserTickets(response.data);
       } catch (error) {
         console.error('Erro ao buscar os ingressos do usuário:', error);
@@ -50,37 +74,14 @@ export default function MyTicketsScreen() {
   };
 
   const handleViewQRCode = async (ticketQrCodeId: string) => {
-    // console.log('give my pdf');
-    const response = await api.get(`/tickets/${ticketQrCodeId}/printTicket`);
-    // console.log('antes');
-    const buffer = Buffer.from(response.data);
-    // console.log('depois');
-    const base64Pdf = buffer.toString('base64');
-    // console.log(buffer);
-    // console.log('after base64Pdf');
-    // const base64Pdf = Buffer.from(response.data).toString('base64');
-    // console.log('Buffer:', buffer);
-    // const base64Pdf =
-    //   'JVBERi0xLjQKJeLjz9MKNCAwIG9iago8PC9UeXBlIC9DYXRhbG9nL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCjIgMCBvYmoKPDwvVHlwZSAvUGFnZXMvS2lkc1sgMyAwIFJdL0NvdW50IDE+PgplbmRvYmoKMyAwIG9iago8PC9UeXBlIC9QYWdlL1BhcmVudCAyIDAgUi9NZWRpYUJveCBbMCAwIDYxMiA3OTJdL0NvbnRlbnRzIDUgMCBSL1Jlc291cmNlcyA8PC9Gb250IDw8L0YxIDYgMCBSPj4+Pj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDYzPj4Kc3RyZWFtCkJUIAovRjEgMTIgVGYKMTAwIDcwMCBUZAooSGVsbG8gZnJvbSBiYXNlNjQgUERGISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iago2IDAgb2JqCjw8L1R5cGUgL0ZvbnQvU3VidHlwZSAvVHlwZTEvTmFtZSAvRjEvQmFzZUZvbnQgL0hlbHZldGljYT4+CmVuZG9iago1IDAgb2JqIDw8L0xlbmd0aCA2Mz4+CnN0cmVhbQpCVAovRjEgMTIgVGYKMTAwIDcwMCBUZAooSGVsbG8gZnJvbSBiYXNlNjQgUERGISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoxIDAgb2JqCjw8L1R5cGUgL0RvY3VtZW50L1BhZ2VzIDIgMCBSPj4KZW5kb2JqCnhyZWYKMCA3CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDA5MCAwMDAwMCBuIAowMDAwMDAwMTUwIDAwMDAwIG4gCjAwMDAwMDAyNzAgMDAwMDAgbiAKMDAwMDAwMDQ1NSAwMDAwMCBuIAowMDAwMDAwNjE0IDAwMDAwIG4gCjAwMDAwMDA3NzggMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDcvUm9vdCAxIDAgUi9JbmZvIDggMCBSPj4Kc3RhcnR4cmVmCjc5OQolJUVPRg==';
+    const response = await api.get(`/tickets/${ticketQrCodeId}/printTicket`, {
+      responseType: 'blob',
+    });
 
-    // const html = `
-    //   <html>
-    //     <body style="margin:0;padding:0;">
-    //     <h1>vai lidiane, por favor</h1>
-    //       <embed src="data:application/pdf;base64,${base64Pdf}" type="application/pdf" width="100%" height="100%" />
-    //     </body>
-    //   </html>
-    // `;
+    const base64Pdf = await convertBlobToBase64(response.data);
     const myUri = `data:application/pdf;base64,${base64Pdf}`;
 
-    //     const fileUri = FileSystem.documentDirectory + 'ticket.pdf';
-    // await FileSystem.writeAsStringAsync(fileUri, base64Pdf, {
-    //   encoding: FileSystem.EncodingType.Base64,
-    // });
     await Print.printAsync({ uri: myUri });
-
-    // setFileUri(filePath);
-    // setIsModalVisible(:);
   };
 
   const getTicketTypeColor = (type: string) => {
