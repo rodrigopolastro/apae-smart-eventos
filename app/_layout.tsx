@@ -7,7 +7,6 @@ import React from 'react';
 import 'react-native-reanimated';
 import { useAuthStore } from '../hooks/useAuthStore'; // 1. Importar a nova loja
 
-// Inicializa a autenticação uma vez fora do componente para evitar múltiplas chamadas
 useAuthStore.getState().initializeAuth();
 
 export default function RootLayout() {
@@ -20,11 +19,9 @@ export default function RootLayout() {
     return null;
   }
 
-  // O AuthProvider FOI REMOVIDO. Não é mais necessário.
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         <Stack.Screen name='(associado)' options={{ headerShown: false }} />
         <Stack.Screen name='(admin)' options={{ headerShown: false }} />
         <Stack.Screen name='login' options={{ headerShown: false }} />
