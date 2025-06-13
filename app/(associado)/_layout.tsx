@@ -20,18 +20,24 @@ export default function TabLayout() {
       <Tabs.Screen
         name='index'
         options={{
+          title: 'HOME TESTE',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name='homelogado'
+        options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
         }}
       />
       <Tabs.Screen
-        name='read-qr-code'
+        name='meuingresso'
         options={{
-          title: 'Ler QR Code',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name='paperplane.fill' color={color} />,
+          title: 'Meus Ingressos',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name='tickets.icon' color={color} />,
         }}
       />
-      
     </Tabs>
   );
 }
