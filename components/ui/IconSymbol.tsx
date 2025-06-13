@@ -18,6 +18,7 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'admin.icon': 'admin-panel-settings',
+  'tickets.icon': 'auto-awesome-motion',
 } as IconMapping;
 
 /**
