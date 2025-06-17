@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     alignItems: 'center', // Centraliza o conteúdo horizontalmente
     paddingBottom: 40, // Adiciona um padding no final para rolagem
+    paddingTop:30
   },
   signupContentWrapper: { // Estilo para o wrapper do formulário de cadastro
     width: '90%', // Largura do contêiner do formulário

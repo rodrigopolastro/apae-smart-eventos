@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import formatDate from '../helpers/formatDate';
+import { ThemedText } from '@/components/ThemedText';
 
 export default function TicketCard({
   ticket,
@@ -19,23 +20,23 @@ export default function TicketCard({
   return (
     <View key={ticket.ticketId} style={[styles.ticketCard]}>
       <View style={[styles.ticketInfoContainer, isUsed && styles.ticketCardUsed]}>
-        <Text style={[styles.eventName, isUsed && styles.usedText]}>
+        <ThemedText style={[styles.eventName, isUsed && styles.usedText]}>
           {ticket.eventName} {isUsed ? '— INGRESSO JÁ USADO' : ''}
-        </Text>
-        <Text style={[styles.ticketType, isUsed && styles.usedText]}>{ticket.ticketType}</Text>
+        </ThemedText>
+        <ThemedText style={[styles.ticketType, isUsed && styles.usedText]}>{ticket.ticketType}</ThemedText>
 
         <View style={styles.divider} />
 
         <View style={styles.detailRow}>
-          <Text style={[styles.detailText, isUsed && styles.usedText]}>{ticket.userName}</Text>
+          <ThemedText style={[styles.detailText, isUsed && styles.usedText]}>{ticket.userName}</ThemedText>
         </View>
         <View style={styles.detailRow}>
-          <Text style={[styles.detailText, isUsed && styles.usedText]}>{ticket.eventLocation}</Text>
+          <ThemedText style={[styles.detailText, isUsed && styles.usedText]}>{ticket.eventLocation}</ThemedText>
         </View>
         <View style={styles.detailRow}>
-          <Text style={[styles.detailText, isUsed && styles.usedText]}>
+          <ThemedText style={[styles.detailText, isUsed && styles.usedText]}>
             {formatDate(ticket.purchasedAt)}
-          </Text>
+          </ThemedText>
         </View>
       </View>
 
@@ -45,9 +46,9 @@ export default function TicketCard({
         // disabled={isUsed}
       >
         <LinearGradient colors={['#667eea', '#764ba2']} style={styles.qrCodeGradient}>
-          <Text style={styles.qrCodeButtonText}>
+          <ThemedText style={styles.qrCodeButtonText}>
             {isUsed ? 'Visualizar Ingresso Usado' : 'Gerar QR Code'}
-          </Text>
+          </ThemedText>
         </LinearGradient>
       </TouchableOpacity>
     </View>

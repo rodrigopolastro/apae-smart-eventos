@@ -33,12 +33,12 @@ export default function CustomHeader({ onLoginPress }: CustomHeaderProps) {
         style={styles.topBar}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => router.push('/(admin)')} style={styles.loginButton}>
+          {/* <TouchableOpacity onPress={() => router.push('/(admin)')} style={styles.loginButton}>
             <ThemedText style={styles.loginButtonText}>ADMIN</ThemedText>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(associado)')} style={styles.loginButton}>
             <ThemedText style={styles.loginButtonText}>Asssociado</ThemedText>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
             <ThemedText style={styles.loginButtonText}>Login</ThemedText>
           </TouchableOpacity>
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
     borderRadius: 20, // Arredondamento em todos os cantos
     position: 'absolute', // Posiciona a topBar dentro do headerContainer
-    top: 10, // 20px do topo do headerContainer para mostrar o fundo azul claro
+    top: 20, // 20px do topo do headerContainer para mostrar o fundo azul claro
     left: 10,
     right: 10,
     zIndex: 2, // Fica acima do fundo do headerContainer
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
 
   loginButton: {
-    backgroundColor: '#00527c',
+    backgroundColor: '#48a3a7',
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 15,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10, // Raio de desfoque maior
     elevation: 20, // Propriedade específica para Android, aumentada
     borderWidth: 2, // Define a largura da borda
-    borderColor: '#48a3a7',
+    borderColor: '#005452',
   },
 
   loginButtonText: {

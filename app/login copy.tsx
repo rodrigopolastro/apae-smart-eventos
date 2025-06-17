@@ -44,16 +44,11 @@ export default function Login() {
     }
 
     setLoading(true);
-    const result = await signIn({ email, password }); // Aqui a autenticação é tentada
+    const result = await signIn({ email, password });
     setLoading(false);
 
     if (result.success) {
-      // **AQUI ESTÁ A VALIDAÇÃO E VERIFICAÇÃO PARA O ADMIN**
-      if (email === 'admin@gmail.com') {
-        router.replace('/admin'); // Redireciona para a página admin.tsx
-      } else {
-        router.replace('/(associado)/homelogado'); // Redireciona para a página de associado padrão
-      }
+      router.replace('/(associado)/homelogado');
     } else {
       showAlert(result.error || 'Email ou senha incorretos');
     }
@@ -82,19 +77,19 @@ export default function Login() {
             {/* Wrapper para o campo de senha e o ícone */}
             <View style={styles.passwordInputContainer}>
               <TextInput
-                style={[styles.input, styles.passwordInput]}
+                style={[styles.input, styles.passwordInput]} // Aplica estilos do input normal e adiciona um para o padding extra
                 placeholder='Digite sua senha:'
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry={!showPassword}
+                secureTextEntry={!showPassword} // Controla a visibilidade
                 autoCapitalize='none'
               />
               <TouchableOpacity
                 style={styles.togglePasswordButton}
-                onPress={() => setShowPassword(!showPassword)}
+                onPress={() => setShowPassword(!showPassword)} // Alterna a visibilidade
               >
                 <MaterialIcons
-                  name={showPassword ? 'visibility' : 'visibility-off'}
+                  name={showPassword ? 'visibility' : 'visibility-off'} // Ícone muda conforme a visibilidade
                   size={24}
                   color='#888'
                 />
@@ -164,10 +159,11 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 20,
+    marginBottom: 20, // Removido do passwordInput para o container
     fontSize: 16,
     backgroundColor: '#f9f9f9',
   },
+  // Novo estilo para o container do input de senha com ícone
   passwordInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -175,15 +171,16 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     backgroundColor: '#f9f9f9',
-    marginBottom: 20,
+    marginBottom: 20, // Mantido o marginBottom aqui para o container inteiro
   },
   passwordInput: {
-    flex: 1,
-    borderWidth: 0,
-    marginBottom: 0,
+    flex: 1, // Faz o input ocupar o espaço restante
+    borderWidth: 0, // Remove a borda do input interno, pois o container já tem
+    marginBottom: 0, // Remove o marginBottom do input interno
   },
   togglePasswordButton: {
-    padding: 12,
+    padding: 12, // Aumenta a área clicável
+    // Ajuste o padding para centralizar o ícone se necessário
   },
   divider: {
     height: 1,

@@ -281,7 +281,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f4f4f8',
   },
   safeArea: {
     flex: 1,
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 0,
     borderRadius: 20,
     padding: 5,
     backgroundColor: 'transparent',
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   },
   allEventsListContainer: {
     width: '100%',
-    marginTop: 30,
+    marginTop: 10,
     paddingHorizontal: 10,
     backgroundColor: 'transparent',
   },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-
+import { ThemedText } from '@/components/ThemedText';
 type TicketPdfModalProps = {
   isModalVisible: boolean;
   setIsModalVisible: (visible: boolean) => void;
@@ -24,13 +24,13 @@ export const TicketPdfModal = ({
     <Modal animationType='slide' transparent={true} visible={isModalVisible}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>{fileUri}</Text>
+          <ThemedText style={styles.modalText}>{fileUri}</ThemedText>
           <WebView source={{ uri: fileUri }} />
           <TouchableOpacity
             style={[styles.button, styles.buttonClose]}
             onPress={() => setIsModalVisible(false)}
           >
-            <Text style={styles.textStyle}>Hide Modal</Text>
+            <ThemedText style={styles.textStyle}>Hide Modal</ThemedText>
           </TouchableOpacity>
         </View>
       </View>
