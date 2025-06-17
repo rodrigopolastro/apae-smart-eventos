@@ -9,7 +9,7 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  // Removido 'Text' nativo pois você está usando 'ThemedText'
+  Text,
   TouchableOpacity,
   View,
   SafeAreaView, // Importado para usar com o CustomHeaderIn
@@ -19,7 +19,7 @@ import api from '../api';
 import CustomHeaderIn from '../components/CustomHeaderIn'; // Header para usuário logado
 import formatDate from '../helpers/formatDate';
 import { useAuthStore } from '../hooks/useAuthStore';
-import { ThemedText } from '@/components/ThemedText'; // Importado o ThemedText
+import { ThemedText } from '@/components/ThemedText';
 
 interface EventType {
   id: number;
@@ -48,7 +48,8 @@ export default function EventDescriptionLogado() {
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [loadingPurchase, setLoadingPurchase] = useState(false);
 
-  // Lembrete: A configuração headerShown: false deve ser feita no _layout.tsx
+  // Remova qualquer useEffect com router.setOptions daqui.
+  // A configuração headerShown: false deve ser feita no _layout.tsx
   // que gerencia esta rota. Ex: (associado)/_layout.tsx ou app/_layout.tsx
 
   useEffect(() => {
@@ -133,15 +134,11 @@ export default function EventDescriptionLogado() {
   const totalValue = calculateTotal();
 
   if (loadingEvent) {
-    return (
-      // A ActivityIndicator é um componente self-closing, não coloque texto dentro dela.
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#667eea" />
-      </View>
-    );
+    return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#667eea" /></View>;
   }
 
   if (!event) {
+    // Manter o CustomHeaderIn aqui para o estado de erro, dentro da SafeAreaView
     return (
       <View style={styles.loadingContainer}>
         <SafeAreaView style={styles.safeAreaForHeader}>
@@ -153,49 +150,54 @@ export default function EventDescriptionLogado() {
   }
 
   return (
+    // Container principal que vai ter o ScrollView e o Footer fixo
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* O CustomHeaderIn é o primeiro elemento rolável, dentro da SafeAreaView */}
         <SafeAreaView style={styles.safeAreaForHeader}>
-          {/* Garanta que não há espaços/quebras de linha entre estas tags */}
           <CustomHeaderIn />
         </SafeAreaView>
 
+        {/* Imagem do evento com borderRadius e centralização */}
         <Image
           source={{ uri: event?.image_url }}
           style={styles.eventImage}
           resizeMode="cover"
         />
+
+        {/* Gradiente para sobrepor a parte inferior da imagem */}
+        {/* <LinearGradient
+          colors={['transparent', 'rgba(244,244,248,0.8)', '#f4f4f8']}
+          style={styles.gradient}
+        /> */}
+
+        {/* Conteúdo do evento (nome, data, localização, descrição) */}
         <View style={styles.contentContainer}>
-          {/* Garanta que não há espaços/quebras de linha entre estas tags */}
           <ThemedText style={styles.eventName}>{event?.name}</ThemedText>
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color="#667eea" />
+            <Ionicons name="calendar-outline" size={20} color="#667eea" /> {/* Ajustado a cor do ícone */}
             <ThemedText style={styles.infoText}>{formatDate(event?.date_time)}</ThemedText>
           </View>
           <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={20} color="#667eea" />
+            <Ionicons name="location-outline" size={20} color="#667eea" /> {/* Ajustado a cor do ícone */}
             <ThemedText style={styles.infoText}>{event?.location}</ThemedText>
           </View>
           <ThemedText style={styles.eventDescription}>{event?.description}</ThemedText>
 
           <View style={styles.ticketsSection}>
-            {/* Garanta que não há espaços/quebras de linha entre estas tags */}
             <ThemedText style={styles.sectionTitle}>Ingressos</ThemedText>
             {ticketTypes.map((type) => (
               <View key={type.id} style={styles.ticketTypeRow}>
-                {/* Garanta que não há espaços/quebras de linha entre estas tags */}
                 <View style={styles.ticketDetails}>
                   <ThemedText style={styles.ticketTypeName}>{type.name}</ThemedText>
                   <ThemedText style={styles.ticketTypePrice}>R$ {type.price.toFixed(2).replace('.', ',')}</ThemedText>
                 </View>
                 <View style={styles.quantitySelector}>
                   <TouchableOpacity onPress={() => handleQuantityChange(type.id, -1)} style={styles.quantityButton} disabled={!quantities[type.id] || quantities[type.id] === 0}>
-                    {/* Garanta que não há espaços/quebras de linha entre estas tags */}
                     <ThemedText style={styles.quantityButtonText}>-</ThemedText>
                   </TouchableOpacity>
                   <ThemedText style={styles.quantityText}>{quantities[type.id] || 0}</ThemedText>
                   <TouchableOpacity onPress={() => handleQuantityChange(type.id, 1)} style={styles.quantityButton}>
-                    {/* Garanta que não há espaços/quebras de linha entre estas tags */}
                     <ThemedText style={styles.quantityButtonText}>+</ThemedText>
                   </TouchableOpacity>
                 </View>
@@ -207,18 +209,12 @@ export default function EventDescriptionLogado() {
 
       {/* Footer Fixo na parte inferior */}
       <View style={styles.footer}>
-        {/* Garanta que não há espaços/quebras de linha entre estas tags */}
         <View style={styles.totalPriceContainer}>
           <ThemedText style={styles.totalPriceLabel}>Total:</ThemedText>
           <ThemedText style={styles.totalPriceValue}>R$ {totalValue.toFixed(2).replace('.', ',')}</ThemedText>
         </View>
         <TouchableOpacity style={[styles.buyButton, (loadingPurchase || totalValue === 0) && styles.disabledButton]} onPress={handlePurchaseTicket} disabled={loadingPurchase || totalValue === 0}>
-          {loadingPurchase ? (
-            // ActivityIndicator é self-closing, não pode ter texto ou espaços dentro
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <ThemedText style={styles.buyButtonText}>Adquirir Ingresso(s)</ThemedText>
-          )}
+          {loadingPurchase ? <ActivityIndicator size="small" color="#FFFFFF" /> : <ThemedText style={styles.buyButtonText}>Adquirir Ingresso(s)</ThemedText>}
         </TouchableOpacity>
       </View>
     </View>
@@ -244,33 +240,39 @@ const styles = StyleSheet.create({
   },
   safeAreaForHeader: {
     backgroundColor: 'transparent',
-    paddingBottom: 10,
-    paddingTop: 30, // Ajuste este valor se o header estiver muito colado ao topo da tela
+    paddingBottom: 10, // Espaçamento extra abaixo do header, se precisar
+    paddingTop:30
   },
   scrollContent: {
-    paddingBottom: 150, // Ajuste este valor para garantir que o footer não esconda o conteúdo
+    // O paddingBottom deve ser maior ou igual à altura do footer fixo
+    // (padding 20 + paddingBottom 30 = 50). Adicione um extra para garantir.
+    paddingBottom: 150, // Ajuste este valor. Um valor seguro é a altura do footer + margem.
   },
   eventImage: {
     borderRadius: 20,
     width: '95%',
     height: 350,
     backgroundColor: '#ccc',
-    alignSelf: 'center',
-    marginTop: 10,
+    alignSelf: 'center', // Centraliza a imagem
+    marginTop: 10, // Espaçamento do CustomHeader
   },
   gradient: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 360 - 150, // Ajuste conforme a altura da imagem e o efeito desejado
+    // O 'top' do gradiente precisa ser calculado dinamicamente ou ajustado com cuidado.
+    // Se a imagem tem 350 de altura e 10 de marginTop, ela termina em 360 do topo do ScrollView.
+    // O gradiente deve começar um pouco antes de 360 para criar o efeito.
+    top: 360 - 150, // 360 (final da imagem) - 150 (altura do gradiente) = 210
     height: 150,
-    zIndex: 1,
+    zIndex: 1, // Garante que o gradiente fique acima da imagem, mas abaixo do texto se o contentContainer tiver zIndex maior
   },
   contentContainer: {
     padding: 20,
     backgroundColor: '#f4f4f8',
-    marginTop: -70, // Ajuste conforme a sobreposição desejada do gradiente
-    zIndex: 2,
+    // marginTop negativo para sobrepor a parte inferior do gradiente.
+    marginTop: -70, // Ajuste conforme a visibilidade desejada do gradiente e do nome do evento.
+    zIndex: 2, // Garante que o conteúdo textual apareça acima do gradiente
   },
   eventName: {
     fontSize: 28,
@@ -353,12 +355,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   footer: {
-    position: 'absolute',
+    position: 'absolute', // Torna o footer fixo na tela
     bottom: 0,
     left: 0,
     right: 0,
     padding: 20,
-    paddingBottom: 30,
+    paddingBottom: 30, // Adiciona padding para o "safe area" inferior em iPhones mais novos
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#ddd',
@@ -369,8 +371,8 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    elevation: 10,
-    zIndex: 3,
+    elevation: 10, // Sombra para Android
+    zIndex: 3, // Garante que o footer fique acima de todo o resto
   },
   totalPriceContainer: {
     flexDirection: 'row',

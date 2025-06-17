@@ -20,24 +20,24 @@ export default function TabLayout() {
       <Tabs.Screen
         name='index'
         options={{
-          title: 'HOME TESTE',
+          title: 'HOME',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name='homelogado'
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name='house.fill' color={color} />,
         }}
-      />
-      <Tabs.Screen
+      /> */}
+      {/* <Tabs.Screen
         name='meuingresso'
         options={{
           title: 'Meus Ingressos',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name='tickets.icon' color={color} />,
         }}
-      />
+      /> */}
     </Tabs>
   );
 }

@@ -11,43 +11,48 @@ import {
   Text,
   TouchableOpacity,
   View,
+  SafeAreaView, // Importado para usar com o CustomHeader
 } from 'react-native';
-
+import { ThemedText } from '@/components/ThemedText';
 import api from '../api';
 import CustomHeader from '../components/CustomHeader'; // Header para usuário não logado
 import formatDate from '../helpers/formatDate';
 
-// 1. Interface para tipar o objeto de evento, correspondendo ao backend
 interface EventType {
   id: number;
   name: string;
   description: string;
-  date_time: string; // <-- Propriedade correta da data
+  date_time: string;
   location: string;
-  image_url?: string; // <-- Opcional, buscada separadamente
+  image_url?: string;
 }
 
 export default function EventDescription() {
-  const router = useRouter();
+  const router = useRouter(); // Mantenha o useRouter para as ações de navegação (push, etc.)
   const params = useLocalSearchParams();
   const eventId = params.eventId;
 
   const [event, setEvent] = useState<EventType | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 2. useEffect corrigido para buscar todos os dados necessários
+  // Remova ESTE useEffect:
+  // useEffect(() => {
+  //   router.setOptions({
+  //     headerShown: false,
+  //   });
+  // }, [router]);
+
+
   useEffect(() => {
     if (eventId && typeof eventId === 'string') {
       const fetchEventData = async () => {
         setLoading(true);
         try {
-          // Busca os detalhes e a URL da imagem em paralelo
           const [detailsResponse, imageUrlResponse] = await Promise.all([
             api.get(`/events/${eventId}`),
             api.get(`/events/${eventId}/imageUrl`),
           ]);
 
-          // Combina os resultados em um único objeto
           const combinedEventData: EventType = {
             ...detailsResponse.data,
             image_url: imageUrlResponse.data.imageUrl,
@@ -67,7 +72,6 @@ export default function EventDescription() {
     }
   }, [eventId]);
 
-  // Exibe um indicador de carregamento enquanto busca os dados
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -76,91 +80,109 @@ export default function EventDescription() {
     );
   }
 
-  // Exibe uma mensagem se o evento não for encontrado
   if (!event) {
     return (
       <View style={styles.loadingContainer}>
-        <CustomHeader />
-        <Text style={styles.errorText}>Evento não encontrado.</Text>
+        <SafeAreaView style={styles.safeAreaForHeader}>
+            <CustomHeader />
+        </SafeAreaView>
+        <ThemedText style={styles.errorText}>Evento não encontrado.</ThemedText>
       </View>
     );
   }
 
-  // Renderização principal da tela
   return (
     <View style={styles.container}>
-      <CustomHeader />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 3. Renderização defensiva usando optional chaining (?.) */}
-        <Image source={{ uri: event?.image_url }} style={styles.eventImage} />
-        <LinearGradient
-          colors={['transparent', 'rgba(28,28,28,0.8)', '#1c1c1c']}
-          style={styles.gradient}
+        <SafeAreaView style={styles.safeAreaForHeader}>
+            <CustomHeader />
+        </SafeAreaView>
+
+        <Image
+          source={{ uri: event?.image_url }}
+          style={styles.eventImage}
+          resizeMode="cover"
         />
+        {/* <LinearGradient
+          colors={['transparent', 'rgba(244,244,248,0.8)', '#f4f4f8']}
+          style={styles.gradient}
+        /> */}
         <View style={styles.contentContainer}>
-          <Text style={styles.eventName}>{event?.name}</Text>
+          <ThemedText style={styles.eventName}>{event?.name}</ThemedText>
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color="#ccc" />
-            <Text style={styles.infoText}>{formatDate(event?.date_time)}</Text>
+            <Ionicons name="calendar-outline" size={20} color="#667eea" />
+            <ThemedText style={styles.infoText}>{formatDate(event?.date_time)}</ThemedText>
           </View>
           <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={20} color="#ccc" />
-            <Text style={styles.infoText}>{event?.location}</Text>
+            <Ionicons name="location-outline" size={20} color="#667eea" />
+            <ThemedText style={styles.infoText}>{event?.location}</ThemedText>
           </View>
-          <Text style={styles.eventDescription}>{event?.description}</Text>
+          <ThemedText style={styles.eventDescription}>{event?.description}</ThemedText>
         </View>
       </ScrollView>
+
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.buyButton}
-          onPress={() => router.push('/login')} // Ação do botão para não logado
+          onPress={() => router.push('/login')}
         >
-          <Text style={styles.buyButtonText}>Faça Login para Adquirir</Text>
+          <ThemedText style={styles.buyButtonText}>Faça Login para Adquirir</ThemedText>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1c1c1c',
+    backgroundColor: '#f4f4f8',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1c1c1c',
+    backgroundColor: '#f4f4f8',
   },
   errorText: {
-    color: '#fff',
+    color: '#333',
     fontSize: 18,
+    marginTop: 20,
+  },
+  safeAreaForHeader: {
+    backgroundColor: 'transparent',
+    paddingBottom: 10,
+    paddingTop:30
   },
   scrollContent: {
     paddingBottom: 100,
   },
   eventImage: {
-    width: '100%',
+    borderRadius: 20,
+    width: '95%',
     height: 350,
-    backgroundColor: '#333',
+    backgroundColor: '#ccc',
+    alignSelf: 'center',
+    marginTop: 10,
   },
   gradient: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 200,
+    top: 360 - 150,
     height: 150,
+    zIndex: 1,
   },
   contentContainer: {
     padding: 20,
-    marginTop: -50,
+    backgroundColor: '#f4f4f8',
+    marginTop: -70,
+    zIndex: 2,
   },
   eventName: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#333',
     marginBottom: 15,
   },
   infoRow: {
@@ -170,12 +192,12 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 16,
-    color: '#ccc',
+    color: '#555',
     marginLeft: 10,
   },
   eventDescription: {
     fontSize: 16,
-    color: '#a0a0a0',
+    color: '#444',
     lineHeight: 24,
     marginTop: 20,
   },
@@ -185,9 +207,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    backgroundColor: 'rgba(28, 28, 28, 0.9)',
+    paddingBottom: 35,
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#333',
+    borderTopColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 10,
+    zIndex: 3,
   },
   buyButton: {
     backgroundColor: '#667eea',

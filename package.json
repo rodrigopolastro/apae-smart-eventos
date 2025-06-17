@@ -8,9 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint",
-    "build:tailwind": "tailwindcss --input input.css --output tailwind.css --no-autoprefixer && tailwind-rn",
-    "dev:tailwind": "concurrently \"tailwindcss --input input.css --output tailwind.css --no-autoprefixer --watch\" \"tailwind-rn --watch\""
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -53,17 +51,13 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "^13.13.5",
-    "tailwind-rn": "^4.2.0",
-    "zustand": "^5.0.5",
-    "expo-dev-client": "~5.2.0"
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
-    "concurrently": "^9.1.2",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
-    "postcss": "^8.5.3",
     "typescript": "~5.8.3"
   },
   "private": true

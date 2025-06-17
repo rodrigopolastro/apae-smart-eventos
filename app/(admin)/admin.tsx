@@ -18,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import api from '../../api'; // Importe a instância do Axios configurada
+import { ThemedText } from '@/components/ThemedText';
 
 import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste este caminho
 
@@ -324,7 +325,7 @@ export default function AdminScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size='large' color='#006db2' />
-        <Text style={styles.loadingText}>Carregando eventos...</Text>
+        <ThemedText style={styles.loadingText}>Carregando eventos...</ThemedText>
       </View>
     );
   }
@@ -332,9 +333,9 @@ export default function AdminScreen() {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Erro ao carregar eventos: {error}</Text>
+        <ThemedText style={styles.errorText}>Erro ao carregar eventos: {error}</ThemedText>
         <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
-          <Text style={styles.retryButtonText}>Tentar Novamente</Text>
+          <ThemedText style={styles.retryButtonText}>Tentar Novamente</ThemedText>
         </TouchableOpacity>
       </View>
     );
@@ -347,11 +348,11 @@ export default function AdminScreen() {
           <CustomHeader />
 
           <View style={styles.adminContentWrapper}>
-            <Text style={styles.sectionTitle}>Gerenciamento de Eventos</Text>
+            <ThemedText style={styles.sectionTitle}>Gerenciamento de Eventos</ThemedText>
 
             <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
               <Ionicons name='add-circle' size={24} color='white' />
-              <Text style={styles.createButtonText}>Criar Novo Evento</Text>
+              <ThemedText style={styles.createButtonText}>Criar Novo Evento</ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleOpenCamera} style={styles.qrCodeButton}>
@@ -362,16 +363,16 @@ export default function AdminScreen() {
                 style={styles.qrCodeButtonGradient}
               >
                 <Ionicons name='scan' size={24} color='white' />
-                <Text style={styles.qrCodeButtonText}>Ler QR Code</Text>
+                <ThemedText style={styles.qrCodeButtonText}>Ler QR Code</ThemedText>
               </LinearGradient>
             </TouchableOpacity>
 
-            <Text style={styles.eventsTitle}>Eventos Cadastrados</Text>
+            <ThemedText style={styles.eventsTitle}>Eventos Cadastrados</ThemedText>
 
             {events.length === 0 ? (
-              <Text style={styles.noEventsText}>
+              <ThemedText style={styles.noEventsText}>
                 Nenhum evento encontrado. Crie um novo evento!
-              </Text>
+              </ThemedText>
             ) : (
               events.map((event) => (
                 <TouchableOpacity key={event.id} onPress={() => handleEventPress(event.id)}>
@@ -387,12 +388,12 @@ export default function AdminScreen() {
                       style={styles.eventImage}
                     />
                     <View style={styles.eventInfo}>
-                      <Text style={styles.eventTitle}>{event.name}</Text>
+                      <ThemedText style={styles.eventTitle}>{event.name}</ThemedText>
                       <View style={styles.eventDetail}>
                         <Ionicons name='calendar' size={16} color='#666' />
-                        <Text style={styles.eventText}>
+                        <ThemedText style={styles.eventText}>
                           {event.location} | {formatDateTimeForDisplay(event.date_time)}
-                        </Text>
+                        </ThemedText>
                       </View>
                       <View style={styles.eventStatusContainer}>
                         <View
@@ -401,9 +402,9 @@ export default function AdminScreen() {
                             event.status === 'ativo' ? styles.activeStatus : styles.inactiveStatus,
                           ]}
                         >
-                          <Text style={styles.eventStatusText}>
+                          <ThemedText style={styles.eventStatusText}>
                             {event.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                          </Text>
+                          </ThemedText>
                         </View>
                       </View>
                     </View>
@@ -561,6 +562,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
+    paddingTop:30
   },
   adminContentWrapper: {
     paddingHorizontal: 20,

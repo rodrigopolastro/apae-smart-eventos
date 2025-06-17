@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
     borderRadius: 20, // Arredondamento em todos os cantos
     position: 'absolute', // Posiciona a topBar dentro do headerContainer
-    top: 10, // 20px do topo do headerContainer para mostrar o fundo azul claro
+    top: 20, // 20px do topo do headerContainer para mostrar o fundo azul claro
     left: 10,
     right: 10,
     zIndex: 2, // Fica acima do fundo do headerContainer
