@@ -1,6 +1,7 @@
 import CustomAlert from '@/components/CustomAlert';
 import CustomHeader from '@/components/CustomHeaderLogin';
 import { ThemedText } from '@/components/ThemedText';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // Importe o MaterialIcons
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -15,7 +16,6 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '../hooks/useAuthStore';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // Importe o MaterialIcons
 
 export default function Login() {
   const router = useRouter();
@@ -45,16 +45,18 @@ export default function Login() {
 
     setLoading(true);
     const result = await signIn({ email, password }); // Aqui a autenticação é tentada
+    console.log(result);
     setLoading(false);
 
     if (result.success) {
       // **AQUI ESTÁ A VALIDAÇÃO E VERIFICAÇÃO PARA O ADMIN**
       if (email === 'admin@gmail.com') {
-        router.replace('/admin'); // Redireciona para a página admin.tsx
+        router.replace('/(admin)'); // Redireciona para a página admin.tsx
       } else {
-        router.replace('/(associado)/homelogado'); // Redireciona para a página de associado padrão
+        router.replace('/(associado)'); // Redireciona para a página de associado padrão
       }
     } else {
+      console.log(result.error);
       showAlert(result.error || 'Email ou senha incorretos');
     }
   };
@@ -115,11 +117,7 @@ export default function Login() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <CustomAlert
-        visible={alertVisible}
-        message={alertMessage}
-        onClose={hideAlert}
-      />
+      <CustomAlert visible={alertVisible} message={alertMessage} onClose={hideAlert} />
     </KeyboardAvoidingView>
   );
 }
@@ -136,7 +134,7 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     alignItems: 'center',
     paddingBottom: 40,
-    paddingTop: 30
+    paddingTop: 30,
   },
   loginContentWrapper: {
     width: '90%',

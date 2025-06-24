@@ -6,19 +6,18 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   View,
-  SafeAreaView, // Importar SafeAreaView para usar dentro do ScrollView se necessário
 } from 'react-native';
 
 import QRCodeModal from '@/components/QRCodeModal';
+import { ThemedText } from '@/components/ThemedText';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import api from '../../api';
-import CustomHeader from '../../components/CustomHeaderLogin'; // Seu CustomHeaderLogin
+import CustomHeader from '../../components/CustomHeader';
 import { database, LocalTicket } from '../../services/database';
-import { ThemedText } from '@/components/ThemedText';
 
 export default function MyTicketsScreen() {
   const router = useRouter();
@@ -88,7 +87,10 @@ export default function MyTicketsScreen() {
       }
     } catch (error) {
       console.error('Erro ao buscar ingressos:', error);
-      Alert.alert('Erro de Conexão', 'Não foi possível atualizar. Exibindo ingressos salvos (se houver).');
+      Alert.alert(
+        'Erro de Conexão',
+        'Não foi possível atualizar. Exibindo ingressos salvos (se houver).'
+      );
       try {
         const localTickets = await database.getLocalTickets();
         if (localTickets.length > 0) {
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     paddingBottom: 20, // Padding no final do conteúdo rolável
-    paddingTop:30
+    paddingTop: 30,
   },
   safeAreaContent: {
     // Estilos para a SafeAreaView DENTRO do ScrollView,

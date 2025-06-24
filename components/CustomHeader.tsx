@@ -1,4 +1,5 @@
 import { ThemedText } from '@/components/ThemedText';
+import { useAuthStore } from '@/hooks/useAuthStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -6,19 +7,25 @@ import { Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-nat
 
 const { width } = Dimensions.get('window');
 
-interface CustomHeaderProps {
-  onLoginPress?: () => void;
-}
-
-export default function CustomHeader({ onLoginPress }: CustomHeaderProps) {
+export default function CustomHeader() {
   const router = useRouter();
+  const { user, signOut } = useAuthStore();
 
-  const handleLogin = () => {
-    if (onLoginPress) {
-      onLoginPress();
-    } else {
-      router.push('/login');
-    }
+  // const handleIngresso = () => {
+  //   if (onPress) {
+  //     onPress();
+  //   } else {
+  //     router.push('/meuingresso');
+  //   }
+  // };
+
+  const redirectToLogin = () => {
+    router.replace('/login');
+  };
+
+  const logout = () => {
+    signOut();
+    router.replace('/login');
   };
 
   return (
@@ -32,17 +39,17 @@ export default function CustomHeader({ onLoginPress }: CustomHeaderProps) {
         end={{ x: 1, y: 0 }}
         style={styles.topBar}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* <TouchableOpacity onPress={() => router.push('/(admin)')} style={styles.loginButton}>
-            <ThemedText style={styles.loginButtonText}>ADMIN</ThemedText>
+        {user ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={logout} style={styles.loginButton}>
+              <ThemedText style={styles.loginButtonText}>Sair</ThemedText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={redirectToLogin} style={styles.loginButton}>
+            <ThemedText style={styles.loginButtonText}>Fazer Login</ThemedText>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/(associado)')} style={styles.loginButton}>
-            <ThemedText style={styles.loginButtonText}>Asssociado</ThemedText>
-          </TouchableOpacity> */}
-          <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-            <ThemedText style={styles.loginButtonText}>Login</ThemedText>
-          </TouchableOpacity>
-        </View>
+        )}
       </LinearGradient>
 
       {/* Logo central */}

@@ -1,6 +1,7 @@
 import CustomHeader from '@/components/CustomHeader';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useAuthStore } from '@/hooks/useAuthStore';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -42,6 +43,7 @@ export default function HomeScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -88,12 +90,12 @@ export default function HomeScreen() {
     fetchEvents();
   }, []);
 
-  const handleLoginPress = () => {
-    router.push('/login');
-  };
+  // const handleLoginPress = () => {
+  //   router.push('/login');
+  // };
 
   const handleEventPress = (eventId: string) => {
-    router.push({ pathname: '/eventdescription', params: { eventId: eventId } });
+    router.push({ pathname: '/eventdescriptionadmin', params: { eventId: eventId } });
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -181,7 +183,7 @@ export default function HomeScreen() {
           style={styles.scrollContent}
           contentContainerStyle={styles.scrollContentContainer}
         >
-          <CustomHeader onLoginPress={handleLoginPress} />
+          <CustomHeader />
 
           <ThemedView style={styles.bodyContentWrapper}>
             <ThemedView style={styles.eventsApaeContainer}>
