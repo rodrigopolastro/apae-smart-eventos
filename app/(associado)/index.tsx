@@ -1,6 +1,7 @@
 import CustomHeader from '@/components/CustomHeader';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useAuthStore } from '@/hooks/useAuthStore';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -18,7 +19,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const { width } = Dimensions.get('window');
 
 // Defina a URL base da sua API.
-// Substitua 'YOUR_API_BASE_URL' pela URL real do seu backend (ex: 'http://localhost:3000' ou o IP da sua máquina se estiver testando em um dispositivo físico).
+// Substitua 'YOUR_API_BASE_URL' pela URL real do seu backend
+// (ex: 'http://localhost:3000' ou o IP da sua máquina se estiver testando em um dispositivo físico).
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface Event {
@@ -42,6 +44,7 @@ export default function HomeScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -181,7 +184,7 @@ export default function HomeScreen() {
           style={styles.scrollContent}
           contentContainerStyle={styles.scrollContentContainer}
         >
-          <CustomHeader onLoginPress={handleLoginPress} />
+          <CustomHeader />
 
           <ThemedView style={styles.bodyContentWrapper}>
             <ThemedView style={styles.eventsApaeContainer}>
