@@ -313,13 +313,57 @@ export default function AdminScreen() {
     );
   };
 
+  // const deleteEvent = async (eventId: string) => {
+  //   Alert.alert(
+  //     'Funcionalidade em Desenvolvimento',
+  //     'A funcionalidade de exclusão de eventos eventos será implementada em breve',
+  //     [{ text: 'OK' }]
+  //   );
+  // };
+
+  // --- Função deleteEvent atualizada ---
   const deleteEvent = async (eventId: string) => {
     Alert.alert(
-      'Funcionalidade em Desenvolvimento',
-      'A funcionalidade de exclusão de eventos eventos será implementada em breve',
-      [{ text: 'OK' }]
+      'Confirmar Exclusão',
+      'Tem certeza que deseja deletar este evento permanentemente? Esta ação não pode ser desfeita.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Deletar',
+          onPress: async () => {
+            try {
+              // Chama o endpoint DELETE no seu backend usando a instância 'api' do Axios
+              const response = await api.delete(`/events/${eventId}`);
+
+              if (response.status === 200) {
+                Alert.alert('Sucesso', 'Evento deletado com sucesso!');
+                // Atualiza o estado do frontend para remover o evento deletado da lista
+                setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+              } else {
+                // Para casos onde o backend pode retornar um status 2xx mas com uma mensagem de erro
+                // (Embora Axios normalmente trate 4xx/5xx como erros)
+                Alert.alert('Erro', response.data.message || 'Erro desconhecido ao deletar evento.');
+              }
+            } catch (error: any) {
+              console.error('Erro ao deletar evento:', error.response?.data || error.message);
+              // Trata erros da requisição HTTP (ex: 404 Not Found, 500 Internal Server Error)
+              if (error.response && error.response.data && error.response.data.message) {
+                Alert.alert('Erro', `Falha ao deletar evento: ${error.response.data.message}`);
+              } else {
+                Alert.alert('Erro', 'Não foi possível deletar o evento. Verifique a conexão ou o servidor.');
+              }
+            }
+          },
+          style: 'destructive', // Estilo vermelho para indicar ação perigosa
+        },
+      ],
+      { cancelable: true } // Permite fechar o alerta clicando fora
     );
   };
+  // --- Fim da função deleteEvent atualizada ---
 
   const handleEventPress = (eventId: string) => {
     router.push({

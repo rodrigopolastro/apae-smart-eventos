@@ -7,6 +7,8 @@ interface User {
   id: number;
   type: string;
   name: string;
+  user_type: string;
+  email: string;
 }
 
 // Interface para o nosso estado de autenticação

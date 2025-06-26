@@ -39,7 +39,7 @@ export default function CustomHeader({ isLoginScreen }: CustomHeaderProps) {
     buttonBackgroundColor = '#5DADE2';
     buttonShadowColor = '#007AFF';
     buttonBorderColor = '#007AFF';
-  } else if (user && user.type === 'admin') {
+  } else if (user && user.email === "admin@apae.com") {
     // Cores para ADMIN (AMARELO MAIS ESCURO)
     gradientColors = ['#FFC107', '#FFA000']; // Amarelo padrão e laranja-âmbar (Material Design)
     logoBorderColor = '#FFA000';
@@ -107,7 +107,7 @@ export default function CustomHeader({ isLoginScreen }: CustomHeaderProps) {
             <View style={styles.loggedInInfoContainer}>
               <Text style={styles.userNameText}>Olá, {user.name || 'Usuário'}!</Text>
               <Text style={styles.userTypeText}>
-                {user.type === 'admin' ? 'Administrador' : 'Associado'}
+                {user.email === 'admin@apae.com' ? 'Administrador' : 'Associado'}
               </Text>
             </View>
           ) : null // Não mostra nada se não for tela de login e não houver usuário logado
