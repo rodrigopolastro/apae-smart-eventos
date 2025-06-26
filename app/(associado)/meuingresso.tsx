@@ -56,7 +56,7 @@ export default function MyTicketsScreen() {
 
     try {
       if (offline) {
-        const localTickets = await database.getLocalTickets();
+        const localTickets = await database.getLocalTickets(user.id);
         const usedTickets = [];
         const unusedTickets = [];
         for (const ticket of localTickets) {
@@ -92,7 +92,7 @@ export default function MyTicketsScreen() {
         'Não foi possível atualizar. Exibindo ingressos salvos (se houver).'
       );
       try {
-        const localTickets = await database.getLocalTickets();
+        const localTickets = await database.getLocalTickets(user.id);
         if (localTickets.length > 0) {
           const usedTickets = [];
           const unusedTickets = [];
