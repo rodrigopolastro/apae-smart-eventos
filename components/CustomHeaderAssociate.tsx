@@ -9,17 +9,24 @@ const { width } = Dimensions.get('window');
 
 export default function CustomHeader() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, signOut } = useAuthStore();
 
-  const handleIngresso = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      router.push('/meuingresso');
-    }
+  // const handleIngresso = () => {
+  //   if (onPress) {
+  //     onPress();
+  //   } else {
+  //     router.push('/meuingresso');
+  //   }
+  // };
+
+  const redirectToLogin = () => {
+    router.replace('/login');
   };
 
-  // const isUserLoggedIn = true;
+  const logout = () => {
+    signOut();
+    router.replace('/login');
+  };
 
   return (
     // O headerContainer agora não é mais absoluto no contexto da tela,
@@ -27,15 +34,22 @@ export default function CustomHeader() {
     <View style={styles.headerContainer}>
       {/* Top Bar / Header */}
       <LinearGradient
-        colors={['#005452', '#48a3a7']} // Azul mais escuro
+        colors={['#4169E1', '#0000CD']} // Azul mais escuro
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.topBar}
       >
-        (isUserLoggedIn ? ()
-        <TouchableOpacity onPress={handleIngresso} style={styles.ingressoButton}>
-          <ThemedText style={styles.ingressoButtonText}>Meus Ingressos</ThemedText>
-        </TouchableOpacity>
+        {user ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={logout} style={styles.loginButton}>
+              <ThemedText style={styles.loginButtonText}>Sair</ThemedText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={redirectToLogin} style={styles.loginButton}>
+            <ThemedText style={styles.loginButtonText}>Fazer Login</ThemedText>
+          </TouchableOpacity>
+        )}
       </LinearGradient>
 
       {/* Logo central */}
@@ -83,9 +97,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  ingressoButton: {
-    //backgroundColor: '#00527c',
-    backgroundColor: 'transparent',
+  loginButton: {
+    backgroundColor: '#48a3a7',
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 15,
@@ -97,13 +110,13 @@ const styles = StyleSheet.create({
     shadowRadius: 10, // Raio de desfoque maior
     elevation: 20, // Propriedade específica para Android, aumentada
     borderWidth: 2, // Define a largura da borda
-    borderColor: '#48a3a7',
+    borderColor: '#005452',
   },
 
-  ingressoButtonText: {
+  loginButtonText: {
     fontSize: 10,
     fontWeight: 'bold',
-    //color: '#000',
+    color: '#fff',
   },
 
   centerLogo: {

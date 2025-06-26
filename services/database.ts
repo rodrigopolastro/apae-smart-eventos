@@ -13,6 +13,7 @@ export interface LocalTicket {
   price: number;
   status: string;
   purchasedAt: string;
+  userId: number;
 }
 
 // Abre o banco de dados de forma síncrona. A instância é criada imediatamente.
@@ -23,7 +24,8 @@ const initDatabase = () => {
   // execSync é a versão síncrona de execAsync.
   db.execSync(`
     PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS tickets (
+    DROP TABLE IF EXISTS tickets;
+    CREATE TABLE tickets (
       ticketId INTEGER PRIMARY KEY NOT NULL,
       qrCodeId TEXT NOT NULL UNIQUE,
       eventName TEXT NOT NULL,
@@ -33,7 +35,8 @@ const initDatabase = () => {
       ticketType TEXT NOT NULL,
       price REAL NOT NULL,
       status TEXT NOT NULL,
-      purchasedAt TEXT NOT NULL
+      purchasedAt TEXT NOT NULL,
+      associateId INTEGER NOT NULL
     );
   `);
 };
@@ -45,8 +48,20 @@ const saveTickets = (tickets: LocalTicket[]) => {
     for (const ticket of tickets) {
       // runSync é a versão síncrona para INSERT, UPDATE, DELETE.
       db.runSync(
-        `INSERT OR REPLACE INTO tickets (ticketId, qrCodeId, eventName, eventLocation, eventDateTime, userName, ticketType, price, status, purchasedAt) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT OR REPLACE INTO tickets (
+          ticketId,
+          qrCodeId,
+          eventName,
+          eventLocation,
+          eventDateTime,
+          userName,
+          ticketType,
+          price,
+          status,
+          purchasedAt,
+          associateId
+        ) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           ticket.ticketId,
           ticket.qrCodeId,
@@ -58,6 +73,7 @@ const saveTickets = (tickets: LocalTicket[]) => {
           ticket.price,
           ticket.status,
           ticket.purchasedAt,
+          ticket.userId,
         ]
       );
     }
@@ -65,9 +81,12 @@ const saveTickets = (tickets: LocalTicket[]) => {
 };
 
 // Função síncrona para buscar os ingressos. Retorna o array diretamente.
-const getLocalTickets = (): LocalTicket[] => {
+const getLocalTickets = (associateId: number): LocalTicket[] => {
   // getAllSync é a versão síncrona para SELECTs.
-  const allRows = db.getAllSync<LocalTicket>('SELECT * FROM tickets ORDER BY eventDateTime DESC;');
+  const allRows = db.getAllSync<LocalTicket>(
+    'SELECT * FROM tickets WHERE associateId = ? ORDER BY eventDateTime DESC;',
+    [associateId]
+  );
   return allRows;
 };
 

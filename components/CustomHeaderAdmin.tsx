@@ -1,5 +1,4 @@
 import { ThemedText } from '@/components/ThemedText';
-import { useAuthStore } from '@/hooks/useAuthStore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -9,17 +8,10 @@ const { width } = Dimensions.get('window');
 
 export default function CustomHeader() {
   const router = useRouter();
-  const { user } = useAuthStore();
 
-  const handleIngresso = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      router.push('/meuingresso');
-    }
+  const redirectToHome = () => {
+    router.replace('/(associado)');
   };
-
-  // const isUserLoggedIn = true;
 
   return (
     // O headerContainer agora não é mais absoluto no contexto da tela,
@@ -27,15 +19,16 @@ export default function CustomHeader() {
     <View style={styles.headerContainer}>
       {/* Top Bar / Header */}
       <LinearGradient
-        colors={['#005452', '#48a3a7']} // Azul mais escuro
+        colors={['#4CAF50', '#8BC34A']} // Azul mais escuro
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.topBar}
       >
-        (isUserLoggedIn ? ()
-        <TouchableOpacity onPress={handleIngresso} style={styles.ingressoButton}>
-          <ThemedText style={styles.ingressoButtonText}>Meus Ingressos</ThemedText>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={redirectToHome} style={styles.loginButton}>
+            <ThemedText style={styles.loginButtonText}>Visualizar Eventos</ThemedText>
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       {/* Logo central */}
@@ -83,29 +76,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  ingressoButton: {
-    //backgroundColor: '#00527c',
-    backgroundColor: 'transparent',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 15,
-    marginTop: 10,
-    marginRight: 10,
-    shadowColor: '#005452', // Cor da sombra preta
-    shadowOffset: { width: 10, height: 15 }, // Deslocamento maior para baixo
-    shadowOpacity: 0.4, // Opacidade aumentada para 40%
-    shadowRadius: 10, // Raio de desfoque maior
-    elevation: 20, // Propriedade específica para Android, aumentada
-    borderWidth: 2, // Define a largura da borda
-    borderColor: '#48a3a7',
-  },
-
-  ingressoButtonText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    //color: '#000',
-  },
-
   centerLogo: {
     width: 130,
     height: 130,
@@ -125,5 +95,27 @@ const styles = StyleSheet.create({
     borderWidth: 2, // Define a largura da borda
     borderColor: '#48a3a7',
     //borderColor: 'yellow'
+  },
+
+  loginButton: {
+    backgroundColor: '#48a3a7',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    marginTop: 10,
+    marginRight: 10,
+    shadowColor: '#005452', // Cor da sombra preta
+    shadowOffset: { width: 10, height: 15 }, // Deslocamento maior para baixo
+    shadowOpacity: 0.4, // Opacidade aumentada para 40%
+    shadowRadius: 10, // Raio de desfoque maior
+    elevation: 20, // Propriedade específica para Android, aumentada
+    borderWidth: 2, // Define a largura da borda
+    borderColor: '#005452',
+  },
+
+  loginButtonText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });

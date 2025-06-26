@@ -1,6 +1,7 @@
+import { ThemedText } from '@/components/ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import formatDate from '../helpers/formatDate';
 
 export default function TicketCard({
@@ -18,24 +19,30 @@ export default function TicketCard({
 
   return (
     <View key={ticket.ticketId} style={[styles.ticketCard]}>
-      <View style={[styles.ticketInfoContainer, isUsed && styles.ticketCardUsed]}>
-        <Text style={[styles.eventName, isUsed && styles.usedText]}>
+      <View style={[styles.ticketInfoContainer, isUsed ? styles.ticketCardUsed : null]}>
+        <ThemedText style={[styles.eventName, isUsed ? styles.usedText : null]}>
           {ticket.eventName} {isUsed ? '— INGRESSO JÁ USADO' : ''}
-        </Text>
-        <Text style={[styles.ticketType, isUsed && styles.usedText]}>{ticket.ticketType}</Text>
+        </ThemedText>
+        <ThemedText style={[styles.ticketType, isUsed ? styles.usedText : null]}>
+          {ticket.ticketType}
+        </ThemedText>
 
         <View style={styles.divider} />
 
         <View style={styles.detailRow}>
-          <Text style={[styles.detailText, isUsed && styles.usedText]}>{ticket.userName}</Text>
+          <ThemedText style={[styles.detailText, isUsed ? styles.usedText : null]}>
+            {ticket.userName}
+          </ThemedText>
         </View>
         <View style={styles.detailRow}>
-          <Text style={[styles.detailText, isUsed && styles.usedText]}>{ticket.eventLocation}</Text>
+          <ThemedText style={[styles.detailText, isUsed ? styles.usedText : null]}>
+            {ticket.eventLocation}
+          </ThemedText>
         </View>
         <View style={styles.detailRow}>
-          <Text style={[styles.detailText, isUsed && styles.usedText]}>
+          <ThemedText style={[styles.detailText, isUsed ? styles.usedText : null]}>
             {formatDate(ticket.purchasedAt)}
-          </Text>
+          </ThemedText>
         </View>
       </View>
 
@@ -44,10 +51,10 @@ export default function TicketCard({
         onPress={() => handleViewQRCode(ticket)}
         // disabled={isUsed}
       >
-        <LinearGradient colors={['#667eea', '#764ba2']} style={styles.qrCodeGradient}>
-          <Text style={styles.qrCodeButtonText}>
+        <LinearGradient colors={['#4169E1', '#0000CD']} style={styles.qrCodeGradient}>
+          <ThemedText style={styles.qrCodeButtonText}>
             {isUsed ? 'Visualizar Ingresso Usado' : 'Gerar QR Code'}
-          </Text>
+          </ThemedText>
         </LinearGradient>
       </TouchableOpacity>
     </View>

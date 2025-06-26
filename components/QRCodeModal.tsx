@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { LocalTicket } from '../services/database'; // Importe a interface
+import { ThemedText } from '@/components/ThemedText';
 
 interface QRCodeModalProps {
   isVisible: boolean;
@@ -23,9 +24,9 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isVisible, onClose, ticket })
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.eventName}>{ticket.eventName}</Text>
-          <Text style={styles.userName}>{ticket.userName}</Text>
-          <Text style={styles.ticketType}>{ticket.ticketType}</Text>
+          <ThemedText style={styles.eventName}>{ticket.eventName}</ThemedText>
+          <ThemedText style={styles.userName}>{ticket.userName}</ThemedText>
+          <ThemedText style={styles.ticketType}>{ticket.ticketType}</ThemedText>
           
           <View style={styles.qrCodeContainer}>
             <QRCode
@@ -36,13 +37,13 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isVisible, onClose, ticket })
             />
           </View>
           
-          <Text style={styles.qrCodeIdText}>{ticket.qrCodeId}</Text>
+          <ThemedText style={styles.qrCodeIdText}>{ticket.qrCodeId}</ThemedText>
           
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
           >
-            <Text style={styles.closeButtonText}>Fechar</Text>
+            <ThemedText style={styles.closeButtonText}>Fechar</ThemedText>
           </TouchableOpacity>
         </View>
       </View>

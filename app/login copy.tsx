@@ -1,7 +1,6 @@
 import CustomAlert from '@/components/CustomAlert';
-import CustomHeader from '@/components/CustomHeader';
+import CustomHeader from '@/components/CustomHeaderLogin';
 import { ThemedText } from '@/components/ThemedText';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // Importe o MaterialIcons
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -16,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { useAuthStore } from '../hooks/useAuthStore';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // Importe o MaterialIcons
 
 export default function Login() {
   const router = useRouter();
@@ -44,19 +44,12 @@ export default function Login() {
     }
 
     setLoading(true);
-    const result = await signIn({ email, password }); // Aqui a autenticação é tentada
-    console.log(result);
+    const result = await signIn({ email, password });
     setLoading(false);
 
     if (result.success) {
-      // **AQUI ESTÁ A VALIDAÇÃO E VERIFICAÇÃO PARA O ADMIN**
-      if (email === 'admin@apae.com') {
-        router.replace('/(admin)'); // Redireciona para a página admin.tsx
-      } else {
-        router.replace('/(associado)'); // Redireciona para a página de associado padrão
-      }
+      router.replace('/(associado)/homelogado');
     } else {
-      console.log(result.error);
       showAlert(result.error || 'Email ou senha incorretos');
     }
   };
@@ -68,7 +61,7 @@ export default function Login() {
     >
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContentContainer}>
-          <CustomHeader isLoginScreen={true} />
+          <CustomHeader />
           <View style={styles.loginContentWrapper}>
             <ThemedText style={styles.sectionTitle}>Login</ThemedText>
             <ThemedText style={styles.label}>Email:</ThemedText>
@@ -84,19 +77,19 @@ export default function Login() {
             {/* Wrapper para o campo de senha e o ícone */}
             <View style={styles.passwordInputContainer}>
               <TextInput
-                style={[styles.input, styles.passwordInput]}
+                style={[styles.input, styles.passwordInput]} // Aplica estilos do input normal e adiciona um para o padding extra
                 placeholder='Digite sua senha:'
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry={!showPassword}
+                secureTextEntry={!showPassword} // Controla a visibilidade
                 autoCapitalize='none'
               />
               <TouchableOpacity
                 style={styles.togglePasswordButton}
-                onPress={() => setShowPassword(!showPassword)}
+                onPress={() => setShowPassword(!showPassword)} // Alterna a visibilidade
               >
                 <MaterialIcons
-                  name={showPassword ? 'visibility' : 'visibility-off'}
+                  name={showPassword ? 'visibility' : 'visibility-off'} // Ícone muda conforme a visibilidade
                   size={24}
                   color='#888'
                 />
@@ -117,7 +110,11 @@ export default function Login() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <CustomAlert visible={alertVisible} message={alertMessage} onClose={hideAlert} />
+      <CustomAlert
+        visible={alertVisible}
+        message={alertMessage}
+        onClose={hideAlert}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -134,7 +131,7 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     alignItems: 'center',
     paddingBottom: 40,
-    paddingTop: 30,
+    paddingTop: 30
   },
   loginContentWrapper: {
     width: '90%',
@@ -162,10 +159,11 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 20,
+    marginBottom: 20, // Removido do passwordInput para o container
     fontSize: 16,
     backgroundColor: '#f9f9f9',
   },
+  // Novo estilo para o container do input de senha com ícone
   passwordInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,15 +171,16 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     backgroundColor: '#f9f9f9',
-    marginBottom: 20,
+    marginBottom: 20, // Mantido o marginBottom aqui para o container inteiro
   },
   passwordInput: {
-    flex: 1,
-    borderWidth: 0,
-    marginBottom: 0,
+    flex: 1, // Faz o input ocupar o espaço restante
+    borderWidth: 0, // Remove a borda do input interno, pois o container já tem
+    marginBottom: 0, // Remove o marginBottom do input interno
   },
   togglePasswordButton: {
-    padding: 12,
+    padding: 12, // Aumenta a área clicável
+    // Ajuste o padding para centralizar o ícone se necessário
   },
   divider: {
     height: 1,

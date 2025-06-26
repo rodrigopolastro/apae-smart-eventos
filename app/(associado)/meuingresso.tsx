@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,9 +14,10 @@ import {
 } from 'react-native';
 
 import QRCodeModal from '@/components/QRCodeModal';
+// import { Text } from '@/components/Text';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import api from '../../api';
-import CustomHeader from '../../components/CustomHeaderLogin';
+import CustomHeader from '../../components/CustomHeader';
 import { database, LocalTicket } from '../../services/database';
 
 export default function MyTicketsScreen() {
@@ -35,33 +37,40 @@ export default function MyTicketsScreen() {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const offline = !(state.isConnected && state.isInternetReachable);
       setIsOffline(offline);
-      // O fetch agora depende do 'user', então o adicionamos como dependência do useEffect
     });
     return () => unsubscribe();
   }, []);
 
-  // Adicionamos um novo useEffect para rodar o fetchTickets sempre que o usuário mudar (ex: ao logar)
   useEffect(() => {
     fetchTickets(isOffline);
   }, [user, isOffline]);
 
-  // 3. Função fetchTickets corrigida para usar o ID do usuário dinâmico
   const fetchTickets = async (offline: boolean) => {
     setLoading(true);
 
-    // Se não houver usuário logado, não há o que buscar.
     if (!user) {
       setUserTickets([]);
+      setUserUsedTickets([]); // Limpa também os ingressos utilizados se não houver usuário
       setLoading(false);
       return;
     }
 
     try {
       if (offline) {
-        const localTickets = await database.getLocalTickets();
-        setUserTickets(localTickets);
+        const localTickets = await database.getLocalTickets(user.id);
+        const usedTickets = [];
+        const unusedTickets = [];
+        for (const ticket of localTickets) {
+          if (ticket.status === 'Utilizado') {
+            usedTickets.push(ticket);
+          } else {
+            unusedTickets.push(ticket);
+          }
+        }
+        setUserUsedTickets(usedTickets);
+        setUserTickets(unusedTickets);
       } else {
-        const loggedUserId = user.id; // <-- USA O ID DO USUÁRIO REAL
+        const loggedUserId = user.id;
         const response = await api.get(`/users/${loggedUserId}/tickets`);
         const apiTickets: LocalTicket[] = response.data;
         const usedTickets = [];
@@ -75,19 +84,36 @@ export default function MyTicketsScreen() {
         }
         setUserUsedTickets(usedTickets);
         setUserTickets(unusedTickets);
-        // setUserTickets(apiTickets);
-        database.saveTickets(apiTickets); // Salva os ingressos mais recentes no cache local
+        database.saveTickets(apiTickets);
       }
     } catch (error) {
       console.error('Erro ao buscar ingressos:', error);
+      Alert.alert(
+        'Erro de Conexão',
+        'Não foi possível atualizar. Exibindo ingressos salvos (se houver).'
+      );
       try {
-        const localTickets = await database.getLocalTickets();
+        const localTickets = await database.getLocalTickets(user.id);
         if (localTickets.length > 0) {
-          setUserTickets(localTickets);
-          Alert.alert('Erro de Conexão', 'Não foi possível atualizar. Exibindo ingressos salvos.');
+          const usedTickets = [];
+          const unusedTickets = [];
+          for (const ticket of localTickets) {
+            if (ticket.status === 'Utilizado') {
+              usedTickets.push(ticket);
+            } else {
+              unusedTickets.push(ticket);
+            }
+          }
+          setUserUsedTickets(usedTickets);
+          setUserTickets(unusedTickets);
+        } else {
+          setUserTickets([]);
+          setUserUsedTickets([]);
         }
       } catch (dbError) {
         console.error('Erro ao buscar ingressos do DB local:', dbError);
+        setUserTickets([]); // Garante que as listas estejam vazias em caso de erro no DB local
+        setUserUsedTickets([]);
       }
     } finally {
       setLoading(false);
@@ -106,25 +132,38 @@ export default function MyTicketsScreen() {
   };
 
   return (
+    // O View principal pode ser substituído por SafeAreaView se preferir que o conteúdo
+    // comece abaixo da barra de status, mas role.
     <View style={styles.container}>
-      <CustomHeader />
-      {isOffline && (
-        <View style={styles.offlineBanner}>
-          <Text style={styles.offlineBannerText}>Você está offline</Text>
-        </View>
-      )}
-      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', margin: 20 }}>Ingressos Disponíveis</Text>
-        <View>
+      {/* O CustomHeader foi movido para DENTRO do ScrollView */}
+      <ScrollView
+        style={styles.scrollViewContent} // Adicionado um estilo para o ScrollView
+        contentContainerStyle={styles.scrollContentContainer} // Para o conteúdo interno do ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {/* Adiciona SafeAreaView aqui se quiser o padding seguro para o header rolável */}
+        <SafeAreaView style={styles.safeAreaContent}>
+          <CustomHeader />
+        </SafeAreaView>
+
+        {isOffline ? (
+          <View style={styles.offlineBanner}>
+            <Text style={styles.offlineBannerText}>Você está offline</Text>
+          </View>
+        ) : null}
+
+        {/* Conteúdo dos Ingressos Disponíveis */}
+        <Text style={styles.sectionTitle}>Ingressos Disponíveis</Text>
+        <View style={styles.ticketSection}>
           {loading ? (
-            <ActivityIndicator size='large' color='#667eea' style={{ marginTop: 50 }} />
+            <ActivityIndicator size='large' color='#667eea' style={styles.activityIndicator} />
           ) : userTickets.length > 0 ? (
             userTickets.map((ticket) => (
               <TicketCard
                 key={ticket.ticketId}
                 ticket={ticket}
                 ticketStatus={'Não utilizado'}
-                handleViewQRCode={() => handleViewQRCode(ticket)} // Passa a função para o cartão
+                handleViewQRCode={() => handleViewQRCode(ticket)}
               />
             ))
           ) : (
@@ -133,19 +172,19 @@ export default function MyTicketsScreen() {
             </Text>
           )}
         </View>
-        <View>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', margin: 20 }}>
-            Ingressos Já Utilizados
-          </Text>
+
+        {/* Conteúdo dos Ingressos Já Utilizados */}
+        <Text style={styles.sectionTitle}>Ingressos Já Utilizados</Text>
+        <View style={styles.ticketSection}>
           {loading ? (
-            <ActivityIndicator size='large' color='#667eea' style={{ marginTop: 50 }} />
+            <ActivityIndicator size='large' color='#667eea' style={styles.activityIndicator} />
           ) : userUsedTickets.length > 0 ? (
             userUsedTickets.map((ticket) => (
               <TicketCard
                 key={ticket.ticketId}
                 ticket={ticket}
                 ticketStatus={'Utilizado'}
-                handleViewQRCode={() => handleViewQRCode(ticket)} // Passa a função para o cartão
+                handleViewQRCode={() => handleViewQRCode(ticket)}
               />
             ))
           ) : (
@@ -157,13 +196,14 @@ export default function MyTicketsScreen() {
           )}
         </View>
       </ScrollView>
-      {selectedTicket && (
+
+      {selectedTicket ? (
         <QRCodeModal
           isVisible={qrCodeModalVisible}
           onClose={() => setQrCodeModalVisible(false)}
           ticket={selectedTicket}
         />
-      )}
+      ) : null}
     </View>
   );
 }
@@ -174,26 +214,48 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f4f4f8',
   },
+  scrollViewContent: {
+    flex: 1, // O ScrollView deve ocupar o espaço total
+  },
+  scrollContentContainer: {
+    paddingBottom: 20, // Padding no final do conteúdo rolável
+    paddingTop: 30,
+  },
+  safeAreaContent: {
+    // Estilos para a SafeAreaView DENTRO do ScrollView,
+    // para garantir que o header comece no lugar certo
+    backgroundColor: 'transparent',
+  },
   offlineBanner: {
     backgroundColor: '#ffc107',
     padding: 8,
     alignItems: 'center',
+    marginBottom: 10, // Adiciona um pequeno espaçamento abaixo do banner
   },
   offlineBannerText: {
     color: '#000',
     fontWeight: 'bold',
   },
-  noTicketsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    marginTop: '40%',
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginHorizontal: 20, // Mantido o margin para o título
+    marginTop: 20, // Adicionado marginTop para espaçar do item anterior (banner ou header)
+    marginBottom: 10, // Espaçamento entre o título e a lista de cards
+    color: '#333', // Cor do texto para ser mais legível
+  },
+  ticketSection: {
+    paddingHorizontal: 10, // Padding para os cards de ticket
+  },
+  activityIndicator: {
+    marginTop: 50,
   },
   noTicketsText: {
     color: '#888',
     fontSize: 18,
     textAlign: 'center',
+    paddingHorizontal: 20,
     paddingBottom: 20,
+    marginTop: 20, // Adicionado para espaçar se não houver tickets
   },
 });

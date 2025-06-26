@@ -1,6 +1,7 @@
 import CustomHeader from '@/components/CustomHeader';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useAuthStore } from '@/hooks/useAuthStore';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -9,6 +10,7 @@ import {
   Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -42,58 +44,56 @@ export default function HomeScreen() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/events`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: Event[] = await response.json();
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/events`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: Event[] = await response.json();
 
-        // Para cada evento, buscar a URL da imagem de capa
-        const eventsWithImages = await Promise.all(
-          data.map(async (event) => {
-            if (event.cover_image_bucket && event.cover_image_path) {
-              try {
-                const imageResponse = await fetch(`${API_BASE_URL}/events/${event.id}/imageUrl`);
-                if (imageResponse.ok) {
-                  const imageData = await imageResponse.json();
-                  return { ...event, imageUrl: imageData.imageUrl };
-                } else {
-                  console.warn(
-                    `Could not fetch image for event ${event.id}:`,
-                    imageResponse.status
-                  );
-                  return { ...event, imageUrl: undefined }; // Ou um placeholder
-                }
-              } catch (imgError) {
-                console.error(`Error fetching image for event ${event.id}:`, imgError);
+      // Para cada evento, buscar a URL da imagem de capa
+      const eventsWithImages = await Promise.all(
+        data.map(async (event) => {
+          if (event.cover_image_bucket && event.cover_image_path) {
+            try {
+              const imageResponse = await fetch(`${API_BASE_URL}/events/${event.id}/imageUrl`);
+              if (imageResponse.ok) {
+                const imageData = await imageResponse.json();
+                return { ...event, imageUrl: imageData.imageUrl };
+              } else {
+                console.warn(`Could not fetch image for event ${event.id}:`, imageResponse.status);
                 return { ...event, imageUrl: undefined }; // Ou um placeholder
               }
+            } catch (imgError) {
+              console.error(`Error fetching image for event ${event.id}:`, imgError);
+              return { ...event, imageUrl: undefined }; // Ou um placeholder
             }
-            return { ...event, imageUrl: undefined }; // Ou um placeholder
-          })
-        );
-        setEvents(eventsWithImages);
-      } catch (e: any) {
-        console.error('Failed to fetch events:', e);
-        setError(e.message || 'Failed to load events.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+          }
+          return { ...event, imageUrl: undefined }; // Ou um placeholder
+        })
+      );
+      setEvents(eventsWithImages);
+    } catch (e: any) {
+      console.error('Failed to fetch events:', e);
+      setError(e.message || 'Failed to load events.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchEvents();
   }, []);
 
-  const handleLoginPress = () => {
-    router.push('/login');
-  };
+  // const handleLoginPress = () => {
+  //   router.push('/login');
+  // };
 
   const handleEventPress = (eventId: string) => {
-    router.push({ pathname: '/eventdescription', params: { eventId: eventId } });
+    router.push({ pathname: '/eventdescriptionadmin', params: { eventId: eventId } });
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -101,6 +101,12 @@ export default function HomeScreen() {
     const newIndex = Math.round(contentOffsetX / (cardWidth + cardSpacing));
     setActiveIndex(newIndex);
     setCurrentScrollX(contentOffsetX);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    fetchEvents();
+    setRefreshing(false);
   };
 
   // Funções scrollLeft e scrollRight não são mais estritamente necessárias se você está usando snapToInterval
@@ -180,8 +186,9 @@ export default function HomeScreen() {
         <ScrollView
           style={styles.scrollContent}
           contentContainerStyle={styles.scrollContentContainer}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          <CustomHeader onLoginPress={handleLoginPress} />
+          <CustomHeader />
 
           <ThemedView style={styles.bodyContentWrapper}>
             <ThemedView style={styles.eventsApaeContainer}>
@@ -189,7 +196,7 @@ export default function HomeScreen() {
             </ThemedView>
 
             {/* Carrossel de Eventos (apenas os 3 primeiros ou quantos quiser) */}
-            {events.length > 0 && (
+            {events.length > 0 ? (
               <ThemedView style={styles.carouselContainer}>
                 <ScrollView
                   ref={scrollViewRef}
@@ -224,22 +231,22 @@ export default function HomeScreen() {
                   ))}
                 </ScrollView>
               </ThemedView>
-            )}
+            ) : null}
 
             {/* Pontos de Paginação */}
-            {events.length > 0 && (
+            {events.length > 0 ? (
               <ThemedView style={styles.paginationDotsContainer}>
                 {events.slice(0, 3).map((_, index) => (
                   <ThemedView
                     key={index}
                     style={[
                       styles.paginationDot,
-                      activeIndex === index && styles.paginationDotActive,
+                      activeIndex === index ? styles.paginationDotActive : null,
                     ]}
                   />
                 ))}
               </ThemedView>
-            )}
+            ) : null}
 
             {/* Lista de Todos os Eventos (vertical) */}
             <ThemedView style={styles.allEventsListContainer}>
@@ -281,7 +288,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f4f4f8',
   },
   safeArea: {
     flex: 1,
@@ -368,7 +375,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 0,
     borderRadius: 20,
     padding: 5,
     backgroundColor: 'transparent',
@@ -388,7 +395,7 @@ const styles = StyleSheet.create({
   },
   allEventsListContainer: {
     width: '100%',
-    marginTop: 30,
+    marginTop: 10,
     paddingHorizontal: 10,
     backgroundColor: 'transparent',
   },

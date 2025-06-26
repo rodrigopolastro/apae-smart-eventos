@@ -1,17 +1,22 @@
-import React from 'react';
-import { StyleSheet, Dimensions, Image, View } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function CustomHeader() {
+  const router = useRouter();
+
+  const redirectToHome = () => {
+    router.replace('/(associado)');
+  };
 
   return (
     // O headerContainer agora não é mais absoluto no contexto da tela,
     // ele fará parte do fluxo do ScrollView em index.tsx.
     <View style={styles.headerContainer}>
-        
       {/* Top Bar / Header */}
       <LinearGradient
         colors={['#005452', '#48a3a7']} // Azul mais escuro
@@ -19,16 +24,18 @@ export default function CustomHeader() {
         end={{ x: 1, y: 0 }}
         style={styles.topBar}
       >
-  
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={redirectToHome} style={styles.loginButton}>
+            <ThemedText style={styles.loginButtonText}>Visualizar Eventos</ThemedText>
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       {/* Logo central */}
       <Image
-      
         source={require('../assets/images/SmartEventos2.png')} // Caminho ajustado para o componente
         style={styles.centerLogo}
       />
-      
     </View>
   );
 }
@@ -56,7 +63,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
     borderRadius: 20, // Arredondamento em todos os cantos
     position: 'absolute', // Posiciona a topBar dentro do headerContainer
-    top: 10, // 20px do topo do headerContainer para mostrar o fundo azul claro
+    top: 20, // 20px do topo do headerContainer para mostrar o fundo azul claro
     left: 10,
     right: 10,
     zIndex: 2, // Fica acima do fundo do headerContainer
@@ -68,7 +75,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     backgroundColor: 'transparent',
   },
- 
+
   centerLogo: {
     width: 130,
     height: 130,
@@ -77,16 +84,38 @@ const styles = StyleSheet.create({
     // Posiciona a logo no centro da borda entre topBar e o conteúdo abaixo
     // top: (topBar.top + topBar.height) - (logo.height / 2) = (20 + 160) - 75 = 180 - 75 = 105
     top: 90,
-    left: (width / 2) - 63, // Centraliza horizontalmente
+    left: width / 2 - 63, // Centraliza horizontalmente
     zIndex: 3, // Acima da topBar
-    borderRadius:30,
+    borderRadius: 30,
     shadowColor: '#000', // Cor da sombra preta
     shadowOffset: { width: 10, height: 15 }, // Deslocamento maior para baixo
     shadowOpacity: 0.4, // Opacidade aumentada para 40%
     shadowRadius: 10, // Raio de desfoque maior
-    elevation: 20, // Propriedade específica para Android, aumentada  
+    elevation: 20, // Propriedade específica para Android, aumentada
     borderWidth: 2, // Define a largura da borda
     borderColor: '#48a3a7',
-   //borderColor: 'yellow'
+    //borderColor: 'yellow'
+  },
+
+  loginButton: {
+    backgroundColor: '#48a3a7',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    marginTop: 10,
+    marginRight: 10,
+    shadowColor: '#005452', // Cor da sombra preta
+    shadowOffset: { width: 10, height: 15 }, // Deslocamento maior para baixo
+    shadowOpacity: 0.4, // Opacidade aumentada para 40%
+    shadowRadius: 10, // Raio de desfoque maior
+    elevation: 20, // Propriedade específica para Android, aumentada
+    borderWidth: 2, // Define a largura da borda
+    borderColor: '#005452',
+  },
+
+  loginButtonText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
