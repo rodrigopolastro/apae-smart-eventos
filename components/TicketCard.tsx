@@ -19,22 +19,28 @@ export default function TicketCard({
 
   return (
     <View key={ticket.ticketId} style={[styles.ticketCard]}>
-      <View style={[styles.ticketInfoContainer, isUsed && styles.ticketCardUsed]}>
-        <ThemedText style={[styles.eventName, isUsed && styles.usedText]}>
+      <View style={[styles.ticketInfoContainer, isUsed ? styles.ticketCardUsed : null]}>
+        <ThemedText style={[styles.eventName, isUsed ? styles.usedText : null]}>
           {ticket.eventName} {isUsed ? '— INGRESSO JÁ USADO' : ''}
         </ThemedText>
-        <ThemedText style={[styles.ticketType, isUsed && styles.usedText]}>{ticket.ticketType}</ThemedText>
+        <ThemedText style={[styles.ticketType, isUsed ? styles.usedText : null]}>
+          {ticket.ticketType}
+        </ThemedText>
 
         <View style={styles.divider} />
 
         <View style={styles.detailRow}>
-          <ThemedText style={[styles.detailText, isUsed && styles.usedText]}>{ticket.userName}</ThemedText>
+          <ThemedText style={[styles.detailText, isUsed ? styles.usedText : null]}>
+            {ticket.userName}
+          </ThemedText>
         </View>
         <View style={styles.detailRow}>
-          <ThemedText style={[styles.detailText, isUsed && styles.usedText]}>{ticket.eventLocation}</ThemedText>
+          <ThemedText style={[styles.detailText, isUsed ? styles.usedText : null]}>
+            {ticket.eventLocation}
+          </ThemedText>
         </View>
         <View style={styles.detailRow}>
-          <ThemedText style={[styles.detailText, isUsed && styles.usedText]}>
+          <ThemedText style={[styles.detailText, isUsed ? styles.usedText : null]}>
             {formatDate(ticket.purchasedAt)}
           </ThemedText>
         </View>

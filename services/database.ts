@@ -83,12 +83,10 @@ const saveTickets = (tickets: LocalTicket[]) => {
 // Função síncrona para buscar os ingressos. Retorna o array diretamente.
 const getLocalTickets = (associateId: number): LocalTicket[] => {
   // getAllSync é a versão síncrona para SELECTs.
-  console.log('associateId id', associateId);
   const allRows = db.getAllSync<LocalTicket>(
     'SELECT * FROM tickets WHERE associateId = ? ORDER BY eventDateTime DESC;',
     [associateId]
   );
-  console.log('rows', allRows);
   return allRows;
 };
 

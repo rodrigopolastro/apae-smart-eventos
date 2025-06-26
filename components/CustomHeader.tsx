@@ -1,10 +1,17 @@
-import { ThemedText } from '@/components/ThemedText';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ColorValue, Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  ColorValue,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -77,83 +84,111 @@ export default function CustomHeader({ isLoginScreen }: CustomHeaderProps) {
         end={{ x: 1, y: 0 }}
         style={isLoginScreen ? styles.topBarLogin : styles.topBar}
       >
-        {isLoginScreen ? (
-          <View style={styles.backButtonContainer}>
-            <TouchableOpacity onPress={handleGoBack} style={[styles.backButton, {
-              backgroundColor: buttonBackgroundColor,
-              shadowColor: buttonShadowColor,
-              borderColor: buttonBorderColor,
-            }]}>
-              <Ionicons name="arrow-back" size={20} color="white" />
-              <ThemedText style={styles.backButtonText}>Voltar</ThemedText>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          user ? (
+        {
+          isLoginScreen ? (
+            <View style={styles.backButtonContainer}>
+              <TouchableOpacity
+                onPress={handleGoBack}
+                style={[
+                  styles.backButton,
+                  {
+                    backgroundColor: buttonBackgroundColor,
+                    shadowColor: buttonShadowColor,
+                    borderColor: buttonBorderColor,
+                  },
+                ]}
+              >
+                <Ionicons name='arrow-back' size={20} color='white' />
+                <Text style={styles.backButtonText}>Voltar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : user ? (
             // NOVO: Container para o nome e tipo do usuário
             <View style={styles.loggedInInfoContainer}>
-              <ThemedText style={styles.userNameText}>Olá, {user.name || 'Usuário'}!</ThemedText>
-              <ThemedText style={styles.userTypeText}>
+              <Text style={styles.userNameText}>Olá, {user.name || 'Usuário'}!</Text>
+              <Text style={styles.userTypeText}>
                 {user.type === 'admin' ? 'Administrador' : 'Associado'}
-              </ThemedText>
+              </Text>
             </View>
           ) : null // Não mostra nada se não for tela de login e não houver usuário logado
-        )}
+        }
 
         {/* Botões de login/logout/perfis (mantidos à direita) */}
-        {!isLoginScreen && (
+        {!isLoginScreen ? (
           user ? (
-            <View style={styles.loggedInButtonsContainer}> {/* NOVO: Container para os botões logados */}
-              {user.type === 'admin' && (
+            <View style={styles.loggedInButtonsContainer}>
+              {/* NOVO: Container para os botões logados */}
+              {/* {user.type === 'admin' && (
                 <TouchableOpacity
                   onPress={() => router.push('/admin')}
-                  style={[styles.loginButton, {
-                    backgroundColor: buttonBackgroundColor,
-                    shadowColor: buttonShadowColor,
-                    borderColor: buttonBorderColor,
-                    marginRight: 10,
-                  }]}
+                  style={[
+                    styles.loginButton,
+                    {
+                      backgroundColor: buttonBackgroundColor,
+                      shadowColor: buttonShadowColor,
+                      borderColor: buttonBorderColor,
+                      marginRight: 10,
+                    },
+                  ]}
                 >
-                  <ThemedText style={styles.loginButtonText}>Painel Admin</ThemedText>
+                  <Text style={styles.loginButtonText}>Painel Admin</Text>
                 </TouchableOpacity>
-              )}
-              {user.type === 'associate' && (
+              )} */}
+              {/* {user.type === 'associate' && (
                 <TouchableOpacity
                   onPress={() => router.push('/meuingresso')}
-                  style={[styles.loginButton, {
+                  style={[
+                    styles.loginButton,
+                    {
+                      backgroundColor: buttonBackgroundColor,
+                      shadowColor: buttonShadowColor,
+                      borderColor: buttonBorderColor,
+                      marginRight: 10,
+                    },
+                  ]}
+                >
+                  <Text style={styles.loginButtonText}>Meu Ingresso</Text>
+                </TouchableOpacity>
+              )} */}
+              <TouchableOpacity
+                onPress={logout}
+                style={[
+                  styles.loginButton,
+                  {
                     backgroundColor: buttonBackgroundColor,
                     shadowColor: buttonShadowColor,
                     borderColor: buttonBorderColor,
-                    marginRight: 10,
-                  }]}
-                >
-                  <ThemedText style={styles.loginButtonText}>Meu Ingresso</ThemedText>
-                </TouchableOpacity>
-              )}
-
-              <TouchableOpacity onPress={logout} style={[styles.loginButton, {
-                backgroundColor: buttonBackgroundColor,
-                shadowColor: buttonShadowColor,
-                borderColor: buttonBorderColor,
-              }]}>
-                <ThemedText style={styles.loginButtonText}>Sair</ThemedText>
+                  },
+                ]}
+              >
+                <Text style={styles.loginButtonText}>Sair</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity onPress={redirectToLogin} style={[styles.loginButton, {
-              backgroundColor: buttonBackgroundColor,
-              shadowColor: buttonShadowColor,
-              borderColor: buttonBorderColor,
-            }]}>
-              <ThemedText style={styles.loginButtonText}>Fazer Login</ThemedText>
+            <TouchableOpacity
+              onPress={redirectToLogin}
+              style={[
+                styles.loginButton,
+                {
+                  backgroundColor: buttonBackgroundColor,
+                  shadowColor: buttonShadowColor,
+                  borderColor: buttonBorderColor,
+                },
+              ]}
+            >
+              <Text style={styles.loginButtonText}>Fazer Login</Text>
             </TouchableOpacity>
           )
-        )}
+        ) : null}
       </LinearGradient>
 
       <Image
         source={require('../assets/images/SmartEventos2.png')}
-        style={[styles.centerLogo, { borderColor: logoBorderColor }, isLoginScreen && styles.centerLogoLogin]}
+        style={[
+          styles.centerLogo,
+          { borderColor: logoBorderColor },
+          isLoginScreen ? styles.centerLogoLogin : null,
+        ]}
       />
     </View>
   );

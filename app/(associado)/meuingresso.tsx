@@ -9,11 +9,12 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 
 import QRCodeModal from '@/components/QRCodeModal';
-import { ThemedText } from '@/components/ThemedText';
+// import { Text } from '@/components/Text';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import api from '../../api';
 import CustomHeader from '../../components/CustomHeader';
@@ -145,14 +146,14 @@ export default function MyTicketsScreen() {
           <CustomHeader />
         </SafeAreaView>
 
-        {isOffline && (
+        {isOffline ? (
           <View style={styles.offlineBanner}>
-            <ThemedText style={styles.offlineBannerText}>Você está offline</ThemedText>
+            <Text style={styles.offlineBannerText}>Você está offline</Text>
           </View>
-        )}
+        ) : null}
 
         {/* Conteúdo dos Ingressos Disponíveis */}
-        <ThemedText style={styles.sectionTitle}>Ingressos Disponíveis</ThemedText>
+        <Text style={styles.sectionTitle}>Ingressos Disponíveis</Text>
         <View style={styles.ticketSection}>
           {loading ? (
             <ActivityIndicator size='large' color='#667eea' style={styles.activityIndicator} />
@@ -166,14 +167,14 @@ export default function MyTicketsScreen() {
               />
             ))
           ) : (
-            <ThemedText style={styles.noTicketsText}>
+            <Text style={styles.noTicketsText}>
               {user ? 'Nenhum ingresso disponível.' : 'Faça login para ver seus ingressos.'}
-            </ThemedText>
+            </Text>
           )}
         </View>
 
         {/* Conteúdo dos Ingressos Já Utilizados */}
-        <ThemedText style={styles.sectionTitle}>Ingressos Já Utilizados</ThemedText>
+        <Text style={styles.sectionTitle}>Ingressos Já Utilizados</Text>
         <View style={styles.ticketSection}>
           {loading ? (
             <ActivityIndicator size='large' color='#667eea' style={styles.activityIndicator} />
@@ -187,22 +188,22 @@ export default function MyTicketsScreen() {
               />
             ))
           ) : (
-            <ThemedText style={styles.noTicketsText}>
+            <Text style={styles.noTicketsText}>
               {user
                 ? 'Você ainda não utilizou nenhum ingresso'
                 : 'Faça login para ver seus ingressos.'}
-            </ThemedText>
+            </Text>
           )}
         </View>
       </ScrollView>
 
-      {selectedTicket && (
+      {selectedTicket ? (
         <QRCodeModal
           isVisible={qrCodeModalVisible}
           onClose={() => setQrCodeModalVisible(false)}
           ticket={selectedTicket}
         />
-      )}
+      ) : null}
     </View>
   );
 }

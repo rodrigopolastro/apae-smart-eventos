@@ -247,7 +247,7 @@ export default function HomeScreen() {
             </ThemedView>
 
             {/* Carrossel de Eventos (apenas os 3 primeiros ou quantos quiser) */}
-            {events.length > 0 && (
+            {events.length > 0 ? (
               <ThemedView style={styles.carouselContainer}>
                 <ScrollView
                   ref={scrollViewRef}
@@ -282,22 +282,22 @@ export default function HomeScreen() {
                   ))}
                 </ScrollView>
               </ThemedView>
-            )}
+            ) : null}
 
             {/* Pontos de Paginação */}
-            {events.length > 0 && (
+            {events.length > 0 ? (
               <ThemedView style={styles.paginationDotsContainer}>
                 {events.slice(0, 3).map((_, index) => (
                   <ThemedView
                     key={index}
                     style={[
                       styles.paginationDot,
-                      activeIndex === index && styles.paginationDotActive,
+                      activeIndex === index ? styles.paginationDotActive : null,
                     ]}
                   />
                 ))}
               </ThemedView>
-            )}
+            ) : null}
 
             {/* Lista de Todos os Eventos (vertical) */}
             <ThemedView style={styles.allEventsListContainer}>

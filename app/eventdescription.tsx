@@ -9,13 +9,12 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  // Removido 'Text' nativo pois você está usando 'ThemedText'
+  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import CustomHeader from '@/components/CustomHeader'; // Header para usuário deslogado
-import { ThemedText } from '@/components/ThemedText'; // Importado o ThemedText
 import api from '../api';
 import formatDate from '../helpers/formatDate';
 import { useAuthStore } from '../hooks/useAuthStore';
@@ -154,7 +153,7 @@ export default function EventDescriptionLogado() {
         <SafeAreaView style={styles.safeAreaForHeader}>
           <CustomHeader />
         </SafeAreaView>
-        <ThemedText style={styles.errorText}>Evento não encontrado.</ThemedText>
+        <Text style={styles.errorText}>Evento não encontrado.</Text>
       </View>
     );
   }
@@ -170,29 +169,29 @@ export default function EventDescriptionLogado() {
         <Image source={{ uri: event?.image_url }} style={styles.eventImage} resizeMode='cover' />
         <View style={styles.contentContainer}>
           {/* Garanta que não há espaços/quebras de linha entre estas tags */}
-          <ThemedText style={styles.eventName}>{event?.name}</ThemedText>
+          <Text style={styles.eventName}>{event?.name}</Text>
           <View style={styles.infoRow}>
             <Ionicons name='calendar-outline' size={20} color='#667eea' />
-            <ThemedText style={styles.infoText}>{formatDate(event?.date_time)}</ThemedText>
+            <Text style={styles.infoText}>{formatDate(event?.date_time)}</Text>
           </View>
           <View style={styles.infoRow}>
             <Ionicons name='location-outline' size={20} color='#667eea' />
-            <ThemedText style={styles.infoText}>{event?.location}</ThemedText>
+            <Text style={styles.infoText}>{event?.location}</Text>
           </View>
-          <ThemedText style={styles.eventDescription}>{event?.description}</ThemedText>
+          <Text style={styles.eventDescription}>{event?.description}</Text>
 
-          {user && (
+          {user ? (
             <View style={styles.ticketsSection}>
               {/* Garanta que não há espaços/quebras de linha entre estas tags */}
-              <ThemedText style={styles.sectionTitle}>Ingressos</ThemedText>
+              <Text style={styles.sectionTitle}>Ingressos</Text>
               {ticketTypes.map((type) => (
                 <View key={type.id} style={styles.ticketTypeRow}>
                   {/* Garanta que não há espaços/quebras de linha entre estas tags */}
                   <View style={styles.ticketDetails}>
-                    <ThemedText style={styles.ticketTypeName}>{type.name}</ThemedText>
-                    <ThemedText style={styles.ticketTypePrice}>
+                    <Text style={styles.ticketTypeName}>{type.name}</Text>
+                    <Text style={styles.ticketTypePrice}>
                       R$ {type.price.toFixed(2).replace('.', ',')}
-                    </ThemedText>
+                    </Text>
                   </View>
                   <View style={styles.quantitySelector}>
                     <TouchableOpacity
@@ -201,21 +200,21 @@ export default function EventDescriptionLogado() {
                       disabled={!quantities[type.id] || quantities[type.id] === 0}
                     >
                       {/* Garanta que não há espaços/quebras de linha entre estas tags */}
-                      <ThemedText style={styles.quantityButtonText}>-</ThemedText>
+                      <Text style={styles.quantityButtonText}>-</Text>
                     </TouchableOpacity>
-                    <ThemedText style={styles.quantityText}>{quantities[type.id] || 0}</ThemedText>
+                    <Text style={styles.quantityText}>{quantities[type.id] || 0}</Text>
                     <TouchableOpacity
                       onPress={() => handleQuantityChange(type.id, 1)}
                       style={styles.quantityButton}
                     >
                       {/* Garanta que não há espaços/quebras de linha entre estas tags */}
-                      <ThemedText style={styles.quantityButtonText}>+</ThemedText>
+                      <Text style={styles.quantityButtonText}>+</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               ))}
             </View>
-          )}
+          ) : null}
         </View>
       </ScrollView>
 
@@ -224,15 +223,13 @@ export default function EventDescriptionLogado() {
         <View style={styles.footer}>
           {/* Garanta que não há espaços/quebras de linha entre estas tags */}
           <View style={styles.totalPriceContainer}>
-            <ThemedText style={styles.totalPriceLabel}>Total:</ThemedText>
-            <ThemedText style={styles.totalPriceValue}>
-              R$ {totalValue.toFixed(2).replace('.', ',')}
-            </ThemedText>
+            <Text style={styles.totalPriceLabel}>Total:</Text>
+            <Text style={styles.totalPriceValue}>R$ {totalValue.toFixed(2).replace('.', ',')}</Text>
           </View>
           <TouchableOpacity
             style={[
               styles.buyButton,
-              (loadingPurchase || totalValue === 0) && styles.disabledButton,
+              loadingPurchase || totalValue === 0 ? styles.disabledButton : null,
             ]}
             onPress={handlePurchaseTicket}
             disabled={loadingPurchase || totalValue === 0}
@@ -241,14 +238,14 @@ export default function EventDescriptionLogado() {
               // ActivityIndicator é self-closing, não pode ter texto ou espaços dentro
               <ActivityIndicator size='small' color='#FFFFFF' />
             ) : (
-              <ThemedText style={styles.buyButtonText}>Adquirir Ingresso(s)</ThemedText>
+              <Text style={styles.buyButtonText}>Adquirir Ingresso(s)</Text>
             )}
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.footer}>
           <TouchableOpacity style={styles.buyButton} onPress={() => router.push('/login')}>
-            <ThemedText style={styles.buyButtonText}>Faça Login para Adquirir</ThemedText>
+            <Text style={styles.buyButtonText}>Faça Login para Adquirir</Text>
           </TouchableOpacity>
         </View>
       )}

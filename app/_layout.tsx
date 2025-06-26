@@ -26,9 +26,8 @@ export default function RootLayout() {
         <Stack.Screen name='(admin)' options={{ headerShown: false }} />
         <Stack.Screen name='login' options={{ headerShown: false }} />
         <Stack.Screen name='signup' options={{ headerShown: false }} />
-        <Stack.Screen name="eventdescription" options={{ headerShown: false }} />
-        <Stack.Screen name="eventdescriptionlogado" options={{ headerShown: false }} />
-        <Stack.Screen name="eventdescriptionadmin" options={{ headerShown: false }} />
+        <Stack.Screen name='eventdescription' options={{ headerShown: false }} />
+        <Stack.Screen name='eventdescriptionadmin' options={{ headerShown: false }} />
         <Stack.Screen name='+not-found' />
       </Stack>
       <StatusBar style='auto' />
