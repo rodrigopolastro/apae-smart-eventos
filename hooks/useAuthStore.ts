@@ -6,13 +6,17 @@ import api from '../api';
 interface User {
   id: number;
   type: string;
+  name: string;
 }
 
 // Interface para o nosso estado de autenticação
 interface AuthState {
   user: User | null;
   isLoading: boolean;
-  signIn: (credentials: { email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  signIn: (credentials: {
+    email: string;
+    password: string;
+  }) => Promise<{ success: boolean; error?: string }>;
   signOut: () => void;
   initializeAuth: () => Promise<void>;
 }
@@ -33,7 +37,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         api.defaults.headers.common['Authorization'] = `Bearer ${storagedToken}`;
       }
     } catch (e) {
-      console.error("Falha ao carregar dados de autenticação", e);
+      console.error('Falha ao carregar dados de autenticação', e);
     } finally {
       set({ isLoading: false });
     }
@@ -50,7 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       await AsyncStorage.setItem('@user', JSON.stringify(user));
       await AsyncStorage.setItem('@token', accessToken);
-      
+
       return { success: true };
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Erro ao fazer login.';

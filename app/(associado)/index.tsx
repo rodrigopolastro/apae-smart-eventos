@@ -2,6 +2,7 @@ import CustomHeader from '@/components/CustomHeader';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuthStore } from '@/hooks/useAuthStore';
+import NetInfo from '@react-native-community/netinfo';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -10,6 +11,7 @@ import {
   Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -45,51 +47,72 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
+  const [isOffline, setIsOffline] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/events`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: Event[] = await response.json();
+  const checkInternet = () => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const offline = !(state.isConnected && state.isInternetReachable);
+      setIsOffline(offline);
+    });
 
-        // Para cada evento, buscar a URL da imagem de capa
-        const eventsWithImages = await Promise.all(
-          data.map(async (event) => {
-            if (event.cover_image_bucket && event.cover_image_path) {
-              try {
-                const imageResponse = await fetch(`${API_BASE_URL}/events/${event.id}/imageUrl`);
-                if (imageResponse.ok) {
-                  const imageData = await imageResponse.json();
-                  return { ...event, imageUrl: imageData.imageUrl };
-                } else {
-                  console.warn(
-                    `Could not fetch image for event ${event.id}:`,
-                    imageResponse.status
-                  );
-                  return { ...event, imageUrl: undefined }; // Ou um placeholder
-                }
-              } catch (imgError) {
-                console.error(`Error fetching image for event ${event.id}:`, imgError);
+    if (isOffline) {
+      setLoading(false);
+    }
+
+    return () => unsubscribe();
+  };
+
+  const fetchEventsConditionally = () => {
+    if (isOffline) {
+      setEvents([]);
+      setLoading(false);
+    } else {
+      fetchEvents();
+    }
+  };
+
+  useEffect(checkInternet);
+
+  useEffect(fetchEventsConditionally, [isOffline]);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/events`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: Event[] = await response.json();
+
+      // Para cada evento, buscar a URL da imagem de capa
+      const eventsWithImages = await Promise.all(
+        data.map(async (event) => {
+          if (event.cover_image_bucket && event.cover_image_path) {
+            try {
+              const imageResponse = await fetch(`${API_BASE_URL}/events/${event.id}/imageUrl`);
+              if (imageResponse.ok) {
+                const imageData = await imageResponse.json();
+                return { ...event, imageUrl: imageData.imageUrl };
+              } else {
+                console.warn(`Could not fetch image for event ${event.id}:`, imageResponse.status);
                 return { ...event, imageUrl: undefined }; // Ou um placeholder
               }
+            } catch (imgError) {
+              console.error(`Error fetching image for event ${event.id}:`, imgError);
+              return { ...event, imageUrl: undefined }; // Ou um placeholder
             }
-            return { ...event, imageUrl: undefined }; // Ou um placeholder
-          })
-        );
-        setEvents(eventsWithImages);
-      } catch (e: any) {
-        console.error('Failed to fetch events:', e);
-        setError(e.message || 'Failed to load events.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
-  }, []);
+          }
+          return { ...event, imageUrl: undefined }; // Ou um placeholder
+        })
+      );
+      setEvents(eventsWithImages);
+    } catch (e: any) {
+      console.error('Failed to fetch events:', e);
+      setError(e.message || 'Failed to load events.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLoginPress = () => {
     router.push('/login');
@@ -122,6 +145,14 @@ export default function HomeScreen() {
   //     scrollViewRef.current.scrollTo({ x: newX, animated: true });
   //   }
   // };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    if (!isOffline) {
+      await fetchEvents();
+    }
+    setRefreshing(false);
+  };
 
   // Função auxiliar para formatar a data
   const formatDate = (dateString: string) => {
@@ -160,6 +191,29 @@ export default function HomeScreen() {
     );
   }
 
+  if (isOffline) {
+    return (
+      <ThemedView style={styles.errorContainer}>
+        <ThemedText style={styles.errorText}>
+          Sem conexão. Não foi possível carregar os eventos.
+        </ThemedText>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={async () => {
+            setLoading(true);
+            setError(null);
+            const state = await NetInfo.fetch();
+            const offline = !(state.isConnected && state.isInternetReachable);
+            setIsOffline(offline);
+            fetchEventsConditionally();
+          }}
+        >
+          <ThemedText style={styles.retryButtonText}>Tentar Novamente</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
+
   if (error) {
     return (
       <ThemedView style={styles.errorContainer}>
@@ -183,6 +237,7 @@ export default function HomeScreen() {
         <ScrollView
           style={styles.scrollContent}
           contentContainerStyle={styles.scrollContentContainer}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           <CustomHeader />
 
