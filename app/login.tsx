@@ -50,7 +50,7 @@ export default function Login() {
 
     if (result.success) {
       // **AQUI ESTÁ A VALIDAÇÃO E VERIFICAÇÃO PARA O ADMIN**
-      if (email === 'admin@gmail.com') {
+      if (email === 'admin@apae.com') {
         router.replace('/(admin)'); // Redireciona para a página admin.tsx
       } else {
         router.replace('/(associado)'); // Redireciona para a página de associado padrão

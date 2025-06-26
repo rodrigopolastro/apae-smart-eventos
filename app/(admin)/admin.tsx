@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
+import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -46,8 +47,12 @@ export default function AdminScreen() {
   const [eventData, setEventData] = useState({
     title: '',
     description: '',
-    date: '', // Corresponde a date_time no backend. Ex: "2025-10-14T13:00:00"
+    date: '',
+    time: '',
     location: '',
+    priceStandard: '',
+    pricePlus: '',
+    priceVip: '',
   });
   const [isScannerVisible, setIsScannerVisible] = useState(false); // Agora não é usado diretamente, use modalIsVisible
   const [modalIsVisible, setModalIsVisible] = useState(false); // Modal da câmera/scanner
@@ -57,6 +62,52 @@ export default function AdminScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const qrCodeLock = useRef(false); // Trava para evitar múltiplas leituras rápidas
+  // const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+  //   if (event.type === 'set' && selectedDate) {
+  //     handleInputChange('date', selectedDate.toISOString());
+  //   }
+
+  //   setShowDatePicker(false);
+  // };
+
+  const showDatePicker = () => {
+    DateTimePickerAndroid.open({
+      value: eventData.date ? new Date(eventData.date) : new Date(),
+      mode: 'date',
+      is24Hour: true,
+      onChange: (event, selectedDate) => {
+        if (event.type === 'set' && selectedDate) {
+          const current = eventData.date ? new Date(eventData.date) : new Date();
+          const updatedDate = new Date(current);
+          updatedDate.setFullYear(selectedDate.getFullYear());
+          updatedDate.setMonth(selectedDate.getMonth());
+          updatedDate.setDate(selectedDate.getDate());
+
+          handleInputChange('date', updatedDate.toISOString());
+        }
+      },
+    });
+  };
+
+  const showTimePicker = () => {
+    DateTimePickerAndroid.open({
+      value: eventData.time ? new Date(eventData.time) : new Date(),
+      mode: 'time',
+      is24Hour: true,
+      onChange: (event, selectedTime) => {
+        if (event.type === 'set' && selectedTime) {
+          const current = eventData.time ? new Date(eventData.time) : new Date();
+          const updatedDate = new Date(current);
+          updatedDate.setHours(selectedTime.getHours());
+          updatedDate.setMinutes(selectedTime.getMinutes());
+
+          handleInputChange('date', updatedDate.toISOString());
+        }
+      },
+    });
+  };
 
   // Função para buscar eventos do backend
   const fetchEvents = async () => {
@@ -120,7 +171,7 @@ export default function AdminScreen() {
     }
     qrCodeLock.current = true; // Ativa a trava
     setModalIsVisible(false); // Fecha o modal do scanner imediatamente
-    setValidationVisible(true); // Abre o modal de validação para feedback
+    setValidationVisible(false);
 
     let currentValidationStatus: 'success' | 'fail' = 'fail';
     let currentValidationMessage: string = 'Erro desconhecido.';
@@ -142,7 +193,11 @@ export default function AdminScreen() {
           if (useError.response && useError.response.status === 409) {
             currentValidationStatus = 'fail';
             currentValidationMessage = 'Este ingresso já foi utilizado anteriormente.';
-          } else if (useError.response && useError.response.data && useError.response.data.message) {
+          } else if (
+            useError.response &&
+            useError.response.data &&
+            useError.response.data.message
+          ) {
             currentValidationStatus = 'fail';
             currentValidationMessage = `Erro ao usar ingresso: ${useError.response.data.message}`;
           } else {
@@ -154,20 +209,22 @@ export default function AdminScreen() {
       } else {
         // Se a validação inicial falhou (ticket inválido ou não encontrado)
         currentValidationStatus = 'fail';
-        currentValidationMessage = 'Ingresso inválido ou não encontrado.';
+        currentValidationMessage = 'Esse ingresso já foi utilizado!';
       }
     } catch (error: any) {
       // Captura erros gerais da validação (ex: erro de rede, erro 500 do servidor)
       console.error('Erro na validação do ticket (GET):', error);
       currentValidationStatus = 'fail';
-      currentValidationMessage = 'Não foi possível verificar o ingresso. Verifique sua conexão ou tente novamente.';
+      currentValidationMessage =
+        'Não foi possível verificar o ingresso. Verifique sua conexão ou tente novamente.';
       if (error.response && error.response.data && error.response.data.message) {
-         currentValidationMessage = error.response.data.message; // Usa a mensagem de erro do backend se disponível
+        currentValidationMessage = error.response.data.message; // Usa a mensagem de erro do backend se disponível
       }
     } finally {
       // Define os estados para exibir o resultado no modal de validação
       setValidationStatus(currentValidationStatus);
       setValidationMessage(currentValidationMessage);
+      setValidationVisible(true); // Abre o modal de validação para feedback
 
       // Fecha o modal de validação após um tempo e libera a trava
       setTimeout(() => {
@@ -182,17 +239,37 @@ export default function AdminScreen() {
       Alert.alert('Erro', 'Preencha todos os campos para criar um evento.');
       return;
     }
+    console.log('data', eventData.date);
+    // console.log('time', new Date(`${eventData.date}T${eventData.time}`).toISOString());
 
-    const newEventForBackend = {
-      name: eventData.title,
-      description: eventData.description,
-      date_time: new Date(eventData.date).toISOString(),
-      location: eventData.location,
-      cover_image_bucket: 'event-covers-apaecuritiba', // Substitua pelo seu bucket real do S3
-      cover_image_path: 'placeholder.jpg', // Substitua por um path padrão válido no S3
-      duration_minutes: 60,
-      event_type: 'public',
+    const newEventReqBody = {
+      event: {
+        name: eventData.title,
+        description: eventData.description,
+        dateTime: eventData.date,
+        location: eventData.location,
+        // cover_image_bucket: 'event-covers-apaecuritiba', // Substitua pelo seu bucket real do S3
+        // cover_image_path: 'placeholder.jpg', // Substitua por um path padrão válido no S3
+        durationMinutes: 60,
+        eventType: 'public',
+      },
+      ticketPrices: {
+        standard: parseFloat(eventData.priceStandard),
+        plus: parseFloat(eventData.pricePlus),
+        vip: parseFloat(eventData.priceVip),
+      },
     };
+    console.log('passou antes');
+    // const newEventForBackend = {
+    //   name: eventData.title,
+    //   description: eventData.description,
+    //   date_time: new Date(eventData.date).toISOString(),
+    //   location: eventData.location,
+    //   // cover_image_bucket: 'event-covers-apaecuritiba', // Substitua pelo seu bucket real do S3
+    //   // cover_image_path: 'placeholder.jpg', // Substitua por um path padrão válido no S3
+    //   duration_minutes: 60,
+    //   event_type: 'public',
+    // };
 
     try {
       const response = await fetch(`${API_BASE_URL}/events`, {
@@ -200,8 +277,9 @@ export default function AdminScreen() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newEventForBackend),
+        body: JSON.stringify(newEventReqBody),
       });
+      console.log(response);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -214,7 +292,11 @@ export default function AdminScreen() {
         title: '',
         description: '',
         date: '',
+        time: '',
         location: '',
+        priceStandard: '',
+        pricePlus: '',
+        priceVip: '',
       });
       fetchEvents();
     } catch (e: any) {
@@ -225,56 +307,63 @@ export default function AdminScreen() {
 
   const toggleEventStatus = async (eventId: string, currentStatus: 'ativo' | 'inativo') => {
     Alert.alert(
-      'Atenção',
-      'A funcionalidade de ativar/desativar eventos é apenas visual neste momento. Não está conectada ao backend para alteração de status de evento.',
+      'Funcionalidade em Desenvolvimento',
+      'A funcionalidade de ativação e inativação de eventos será implementada em breve',
       [{ text: 'OK' }]
-    );
-    setEvents(
-      events.map((event) =>
-        event.id === eventId
-          ? { ...event, status: currentStatus === 'ativo' ? 'inativo' : 'ativo' }
-          : event
-      )
     );
   };
 
+  // const deleteEvent = async (eventId: string) => {
+  //   Alert.alert(
+  //     'Funcionalidade em Desenvolvimento',
+  //     'A funcionalidade de exclusão de eventos eventos será implementada em breve',
+  //     [{ text: 'OK' }]
+  //   );
+  // };
+
+  // --- Função deleteEvent atualizada ---
   const deleteEvent = async (eventId: string) => {
     Alert.alert(
       'Confirmar Exclusão',
-      'Tem certeza que deseja excluir este evento? Esta ação é irreversível.',
+      'Tem certeza que deseja deletar este evento permanentemente? Esta ação não pode ser desfeita.',
       [
         {
           text: 'Cancelar',
           style: 'cancel',
         },
         {
-          text: 'Excluir',
+          text: 'Deletar',
           onPress: async () => {
             try {
-              const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
-                method: 'DELETE',
-              });
+              // Chama o endpoint DELETE no seu backend usando a instância 'api' do Axios
+              const response = await api.delete(`/events/${eventId}`);
 
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Falha ao excluir evento.');
+              if (response.status === 200) {
+                Alert.alert('Sucesso', 'Evento deletado com sucesso!');
+                // Atualiza o estado do frontend para remover o evento deletado da lista
+                setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+              } else {
+                // Para casos onde o backend pode retornar um status 2xx mas com uma mensagem de erro
+                // (Embora Axios normalmente trate 4xx/5xx como erros)
+                Alert.alert('Erro', response.data.message || 'Erro desconhecido ao deletar evento.');
               }
-
-              Alert.alert('Sucesso', 'Evento excluído com sucesso!');
-              fetchEvents();
-            } catch (e: any) {
-              console.error('Erro ao excluir evento:', e);
-              Alert.alert(
-                'Erro',
-                e.message || 'Não foi possível excluir o evento. Tente novamente.'
-              );
+            } catch (error: any) {
+              console.error('Erro ao deletar evento:', error.response?.data || error.message);
+              // Trata erros da requisição HTTP (ex: 404 Not Found, 500 Internal Server Error)
+              if (error.response && error.response.data && error.response.data.message) {
+                Alert.alert('Erro', `Falha ao deletar evento: ${error.response.data.message}`);
+              } else {
+                Alert.alert('Erro', 'Não foi possível deletar o evento. Verifique a conexão ou o servidor.');
+              }
             }
           },
+          style: 'destructive', // Estilo vermelho para indicar ação perigosa
         },
       ],
-      { cancelable: true }
+      { cancelable: true } // Permite fechar o alerta clicando fora
     );
   };
+  // --- Fim da função deleteEvent atualizada ---
 
   const handleEventPress = (eventId: string) => {
     router.push({
@@ -311,10 +400,7 @@ export default function AdminScreen() {
         hour: '2-digit',
         minute: '2-digit',
       };
-      return `${date.toLocaleDateString('pt-BR', options)} • ${date.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })}`;
+      return date.toLocaleDateString('pt-BR', options);
     } catch (e) {
       console.error('Erro ao formatar data:', dateString, e);
       return 'Data inválida';
@@ -377,7 +463,10 @@ export default function AdminScreen() {
               events.map((event) => (
                 <TouchableOpacity key={event.id} onPress={() => handleEventPress(event.id)}>
                   <View
-                    style={[styles.eventCard, event.status === 'inativo' && styles.inactiveEvent]}
+                    style={[
+                      styles.eventCard,
+                      event.status === 'inativo' ? styles.inactiveEvent : null,
+                    ]}
                   >
                     <Image
                       source={
@@ -395,7 +484,7 @@ export default function AdminScreen() {
                           {event.location} | {formatDateTimeForDisplay(event.date_time)}
                         </ThemedText>
                       </View>
-                      <View style={styles.eventStatusContainer}>
+                      {/* <View style={styles.eventStatusContainer}>
                         <View
                           style={[
                             styles.eventStatus,
@@ -406,7 +495,7 @@ export default function AdminScreen() {
                             {event.status === 'ativo' ? 'Ativo' : 'Inativo'}
                           </ThemedText>
                         </View>
-                      </View>
+                      </View> */}
                     </View>
 
                     <View style={styles.eventActions}>
@@ -462,6 +551,7 @@ export default function AdminScreen() {
               </TouchableOpacity>
               <Text style={styles.modalHeaderText}>Criar Novo Evento</Text>
             </LinearGradient>
+
             <ScrollView contentContainerStyle={styles.formContent}>
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Título do Evento</Text>
@@ -472,6 +562,7 @@ export default function AdminScreen() {
                   onChangeText={(text) => handleInputChange('title', text)}
                 />
               </View>
+
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Descrição</Text>
                 <TextInput
@@ -482,24 +573,77 @@ export default function AdminScreen() {
                   onChangeText={(text) => handleInputChange('description', text)}
                 />
               </View>
+
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Data e Hora</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder='Ex: 2025-10-14T13:00:00 (Formato ISO)'
-                  value={eventData.date}
-                  onChangeText={(text) => handleInputChange('date', text)}
-                />
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Data</Text>
+                  <TouchableOpacity style={styles.input} onPress={showDatePicker}>
+                    <Text>
+                      {eventData.date
+                        ? new Date(eventData.date).toLocaleDateString()
+                        : 'Selecionar Data'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Hora</Text>
+                  <TouchableOpacity style={styles.input} onPress={showTimePicker}>
+                    <Text>
+                      {eventData.date
+                        ? new Date(eventData.date).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'Selecionar Hora'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
+
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Localização</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder='Ex: Goiânia - GO'
+                  placeholder=''
                   value={eventData.location}
                   onChangeText={(text) => handleInputChange('location', text)}
                 />
               </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Preço Ingresso Padrão (R$)</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType='numeric'
+                  placeholder=''
+                  value={eventData.priceStandard}
+                  onChangeText={(text) => handleInputChange('priceStandard', text)}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Preço Ingresso Plus (R$)</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType='numeric'
+                  placeholder=''
+                  value={eventData.pricePlus}
+                  onChangeText={(text) => handleInputChange('pricePlus', text)}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Preço Ingresso VIP (R$)</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType='numeric'
+                  placeholder=''
+                  value={eventData.priceVip}
+                  onChangeText={(text) => handleInputChange('priceVip', text)}
+                />
+              </View>
+
               <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                 <Text style={styles.submitButtonText}>Cadastrar Evento</Text>
               </TouchableOpacity>
@@ -531,10 +675,12 @@ export default function AdminScreen() {
           onRequestClose={() => setValidationVisible(false)}
         >
           <View style={styles.validationContainer}>
-            <View style={[
-              styles.validationContent,
-              validationStatus === 'success' ? styles.validationSuccess : styles.validationFail
-            ]}>
+            <View
+              style={[
+                styles.validationContent,
+                validationStatus === 'success' ? styles.validationSuccess : styles.validationFail,
+              ]}
+            >
               <Ionicons
                 name={validationStatus === 'success' ? 'checkmark-circle' : 'close-circle'}
                 size={80}
@@ -544,7 +690,6 @@ export default function AdminScreen() {
             </View>
           </View>
         </Modal>
-
       </SafeAreaView>
     </View>
   );
@@ -562,7 +707,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
-    paddingTop:30
+    paddingTop: 30,
   },
   adminContentWrapper: {
     paddingHorizontal: 20,
