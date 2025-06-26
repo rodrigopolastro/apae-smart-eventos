@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../api'; // Sua instância do Axios
-import CustomHeader from '../components/CustomHeaderLogin';
+import CustomHeader from '../components/CustomHeader';
 
 // --- Interfaces para os dados da API e dados processados ---
 

@@ -1,3 +1,4 @@
+import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,9 +19,8 @@ import {
   View,
 } from 'react-native';
 import api from '../../api'; // Importe a instância do Axios configurada
-import { ThemedText } from '@/components/ThemedText';
 
-import CustomHeader from '../../components/CustomHeaderLogin'; // Ajuste este caminho
+import CustomHeader from '../../components/CustomHeader'; // Ajuste este caminho
 
 // Defina a URL base da sua API.
 // SUBSTITUA 'http://YOUR_API_BASE_URL' PELA URL REAL DO SEU BACKEND!

@@ -1,8 +1,8 @@
+import { ThemedText } from '@/components/ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import formatDate from '../helpers/formatDate';
-import { ThemedText } from '@/components/ThemedText';
 
 export default function TicketCard({
   ticket,
@@ -45,7 +45,7 @@ export default function TicketCard({
         onPress={() => handleViewQRCode(ticket)}
         // disabled={isUsed}
       >
-        <LinearGradient colors={['#667eea', '#764ba2']} style={styles.qrCodeGradient}>
+        <LinearGradient colors={['#4169E1', '#0000CD']} style={styles.qrCodeGradient}>
           <ThemedText style={styles.qrCodeButtonText}>
             {isUsed ? 'Visualizar Ingresso Usado' : 'Gerar QR Code'}
           </ThemedText>

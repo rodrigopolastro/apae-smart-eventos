@@ -1,5 +1,5 @@
 import CustomAlert from '@/components/CustomAlert';
-import CustomHeader from '@/components/CustomHeaderLogin';
+import CustomHeader from '@/components/CustomHeader';
 import { ThemedText } from '@/components/ThemedText';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // Importe o MaterialIcons
 import { useRouter } from 'expo-router';
@@ -68,7 +68,7 @@ export default function Login() {
     >
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContentContainer}>
-          <CustomHeader />
+          <CustomHeader isLoginScreen={true} />
           <View style={styles.loginContentWrapper}>
             <ThemedText style={styles.sectionTitle}>Login</ThemedText>
             <ThemedText style={styles.label}>Email:</ThemedText>
