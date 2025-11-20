@@ -3,15 +3,15 @@ import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 import CustomHeader from '@/components/CustomHeader'; // Header para usuário deslogado
@@ -190,7 +190,7 @@ export default function EventDescriptionLogado() {
                   <View style={styles.ticketDetails}>
                     <Text style={styles.ticketTypeName}>{type.name}</Text>
                     <Text style={styles.ticketTypePrice}>
-                      R$ {type.price.toFixed(2).replace('.', ',')}
+                      R$ {Number(type.price).toFixed(2).replace('.', ',')}
                     </Text>
                   </View>
                   <View style={styles.quantitySelector}>
