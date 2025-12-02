@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 
-import CustomHeader from '@/components/CustomHeader'; // Header para usuário deslogado
+import CustomHeader from '@/components/CustomHeaderAssociate'; // Header para usuário deslogado
 import api from '../api';
 import formatDate from '../helpers/formatDate';
 import { useAuthStore } from '../hooks/useAuthStore';
@@ -190,7 +190,7 @@ export default function EventDescriptionLogado() {
                   <View style={styles.ticketDetails}>
                     <Text style={styles.ticketTypeName}>{type.name}</Text>
                     <Text style={styles.ticketTypePrice}>
-                      R$ {type.price.toFixed(2).replace('.', ',')}
+                      R$ {type.price}
                     </Text>
                   </View>
                   <View style={styles.quantitySelector}>
@@ -224,7 +224,7 @@ export default function EventDescriptionLogado() {
           {/* Garanta que não há espaços/quebras de linha entre estas tags */}
           <View style={styles.totalPriceContainer}>
             <Text style={styles.totalPriceLabel}>Total:</Text>
-            <Text style={styles.totalPriceValue}>R$ {totalValue.toFixed(2).replace('.', ',')}</Text>
+            <Text style={styles.totalPriceValue}>R$ {totalValue}</Text>
           </View>
           <TouchableOpacity
             style={[

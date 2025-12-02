@@ -1,7 +1,32 @@
+// {
+//   "extends": "expo/tsconfig.base",
+//   "compilerOptions": {
+//     "strict": true,
+//     "paths": {
+//       "@/*": [
+//         "./*"
+//       ]
+//     }
+//   },
+//   "include": [
+//     "**/*.ts",
+//     "**/*.tsx",
+//     ".expo/types/**/*.ts",
+//     "expo-env.d.ts"
+//   ]
+// }
+
+
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    
+    // 👇 ADICIONEI ESTAS DUAS LINHAS PARA CORRIGIR OS ERROS
+    "jsx": "react-native",
+    "esModuleInterop": true,
+    // 👆
+
     "paths": {
       "@/*": [
         "./*"

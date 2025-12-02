@@ -17,7 +17,7 @@ import QRCodeModal from '@/components/QRCodeModal';
 // import { Text } from '@/components/Text';
 import { useAuthStore } from '@/hooks/useAuthStore';
 import api from '../../api';
-import CustomHeader from '../../components/CustomHeader';
+import CustomHeader from '../../components/CustomHeaderAssociate';
 import { database, LocalTicket } from '../../services/database';
 
 export default function MyTicketsScreen() {

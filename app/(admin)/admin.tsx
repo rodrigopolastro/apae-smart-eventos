@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import api from '../../api'; // Importe a instância do Axios configurada
 
-import CustomHeader from '../../components/CustomHeader'; // Ajuste este caminho
+import CustomHeader from '../../components/CustomHeaderAdmin'; // Ajuste este caminho
 
 // Defina a URL base da sua API.
 // SUBSTITUA 'http://YOUR_API_BASE_URL' PELA URL REAL DO SEU BACKEND!

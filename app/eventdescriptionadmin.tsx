@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../api'; // Sua instância do Axios
-import CustomHeader from '../components/CustomHeader';
+import CustomHeader from '../components/CustomHeaderAdmin';
 
 // --- Interfaces para os dados da API e dados processados ---
 
