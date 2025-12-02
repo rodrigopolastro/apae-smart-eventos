@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser'; // 1. IMPORTADO O WEBBROWSER
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,11 +15,12 @@ import {
   View,
 } from 'react-native';
 
-import CustomHeader from '@/components/CustomHeader'; // Header para usuário deslogado
+import CustomHeader from '@/components/CustomHeader';
 import api from '../api';
 import formatDate from '../helpers/formatDate';
 import { useAuthStore } from '../hooks/useAuthStore';
 
+// Interfaces (sem alterações)
 interface EventType {
   id: number;
   name: string;
@@ -45,9 +47,7 @@ export default function EventDescriptionLogado() {
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [loadingPurchase, setLoadingPurchase] = useState(false);
-
-  // Lembrete: A configuração headerShown: false deve ser feita no _layout.tsx
-  // que gerencia esta rota. Ex: (associado)/_layout.tsx ou app/_layout.tsx
+  const [loadingStripe, setLoadingStripe] = useState(false); // Estado de loading para o novo botão
 
   useEffect(() => {
     if (eventId && typeof eventId === 'string') {
@@ -92,6 +92,7 @@ export default function EventDescriptionLogado() {
     });
   };
 
+  // 2. FUNÇÃO ORIGINAL RESTAURADA PARA O PRIMEIRO BOTÃO
   const handlePurchaseTicket = async () => {
     if (!user || !user.id) {
       Alert.alert('Erro de Autenticação', 'Você precisa estar logado para adquirir um ingresso.');
@@ -111,7 +112,7 @@ export default function EventDescriptionLogado() {
         tickets: ticketsToPurchase,
       });
       if (response.status === 201) {
-        Alert.alert('Sucesso!', 'Ingressos adquiridos com sucesso!', [
+        Alert.alert('<3', 'Bem-vindo a diversão e solidariedade!', [
           { text: 'OK', onPress: () => router.push('/(associado)/meuingresso') },
         ]);
       } else {
@@ -128,11 +129,54 @@ export default function EventDescriptionLogado() {
     }
   };
 
+  // 3. NOVA FUNÇÃO CRIADA PARA O PAGAMENTO COM STRIPE (SEGUNDO BOTÃO)
+  const handleStripePayment = async () => {
+    const totalValue = calculateTotal();
+    if (totalValue <= 0) {
+      Alert.alert('Atenção', 'Selecione ingressos antes de ir para o pagamento.');
+      return;
+    }
+
+    setLoadingStripe(true);
+    try {
+      const payload = {
+        totalAmount: Math.round(totalValue * 100),
+        currency: 'brl',
+        description: `Ingressos para: ${event?.name}`,
+        successUrl: 'http://35.169.57.51:3000/payments/payment-success',
+        cancelUrl: 'http://35.169.57.51:3000/payments/payment-cancel',
+      };
+
+      const response = await api.post('/payments/create-checkout-session', payload );
+      const { url: checkoutUrl } = response.data;
+
+      if (checkoutUrl) {
+        // Abre a URL da Stripe dentro do app usando o WebBrowser
+        await WebBrowser.openBrowserAsync(checkoutUrl);
+        // Quando o usuário fechar o navegador, o código continua daqui.
+        Alert.alert(
+          'Pagamento Processado',
+          'Seu pagamento foi aprovado, seus ingressos estarão disponíveis em "Meus Ingressos".',
+          [{ text: 'OK' }]
+        );
+      } else {
+        throw new Error('URL de checkout não foi recebida.');
+      }
+    } catch (error) {
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message
+        : 'Não foi possível iniciar o pagamento.';
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setLoadingStripe(false);
+    }
+  };
+
   const calculateTotal = () => {
     if (!ticketTypes.length) return 0;
     return ticketTypes.reduce((total, type) => {
       const quantity = quantities[type.id] || 0;
-      return total + quantity * type.price;
+      return total + quantity * Number(type.price);
     }, 0);
   };
 
@@ -140,7 +184,6 @@ export default function EventDescriptionLogado() {
 
   if (loadingEvent) {
     return (
-      // A ActivityIndicator é um componente self-closing, não coloque texto dentro dela.
       <View style={styles.loadingContainer}>
         <ActivityIndicator size='large' color='#667eea' />
       </View>
@@ -161,14 +204,12 @@ export default function EventDescriptionLogado() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* ... seu JSX para mostrar os detalhes do evento ... (sem alterações) */}
         <SafeAreaView style={styles.safeAreaForHeader}>
-          {/* Garanta que não há espaços/quebras de linha entre estas tags */}
           <CustomHeader />
         </SafeAreaView>
-
         <Image source={{ uri: event?.image_url }} style={styles.eventImage} resizeMode='cover' />
         <View style={styles.contentContainer}>
-          {/* Garanta que não há espaços/quebras de linha entre estas tags */}
           <Text style={styles.eventName}>{event?.name}</Text>
           <View style={styles.infoRow}>
             <Ionicons name='calendar-outline' size={20} color='#667eea' />
@@ -179,14 +220,11 @@ export default function EventDescriptionLogado() {
             <Text style={styles.infoText}>{event?.location}</Text>
           </View>
           <Text style={styles.eventDescription}>{event?.description}</Text>
-
           {user ? (
             <View style={styles.ticketsSection}>
-              {/* Garanta que não há espaços/quebras de linha entre estas tags */}
               <Text style={styles.sectionTitle}>Ingressos</Text>
               {ticketTypes.map((type) => (
                 <View key={type.id} style={styles.ticketTypeRow}>
-                  {/* Garanta que não há espaços/quebras de linha entre estas tags */}
                   <View style={styles.ticketDetails}>
                     <Text style={styles.ticketTypeName}>{type.name}</Text>
                     <Text style={styles.ticketTypePrice}>
@@ -197,17 +235,13 @@ export default function EventDescriptionLogado() {
                     <TouchableOpacity
                       onPress={() => handleQuantityChange(type.id, -1)}
                       style={styles.quantityButton}
-                      disabled={!quantities[type.id] || quantities[type.id] === 0}
-                    >
-                      {/* Garanta que não há espaços/quebras de linha entre estas tags */}
+                      disabled={!quantities[type.id] || quantities[type.id] === 0}>
                       <Text style={styles.quantityButtonText}>-</Text>
                     </TouchableOpacity>
                     <Text style={styles.quantityText}>{quantities[type.id] || 0}</Text>
                     <TouchableOpacity
                       onPress={() => handleQuantityChange(type.id, 1)}
-                      style={styles.quantityButton}
-                    >
-                      {/* Garanta que não há espaços/quebras de linha entre estas tags */}
+                      style={styles.quantityButton}>
                       <Text style={styles.quantityButtonText}>+</Text>
                     </TouchableOpacity>
                   </View>
@@ -218,27 +252,43 @@ export default function EventDescriptionLogado() {
         </View>
       </ScrollView>
 
-      {/* Footer Fixo na parte inferior */}
+      {/* 4. FOOTER ATUALIZADO COM OS DOIS BOTÕES */}
       {user ? (
         <View style={styles.footer}>
-          {/* Garanta que não há espaços/quebras de linha entre estas tags */}
           <View style={styles.totalPriceContainer}>
             <Text style={styles.totalPriceLabel}>Total:</Text>
             <Text style={styles.totalPriceValue}>R$ {totalValue.toFixed(2).replace('.', ',')}</Text>
           </View>
+
+          {/* BOTÃO 1: Lógica original de "compra" direta */}
           <TouchableOpacity
             style={[
               styles.buyButton,
-              loadingPurchase || totalValue === 0 ? styles.disabledButton : null,
+              (loadingPurchase || totalValue === 0) && styles.disabledButton,
+              { marginBottom: 10 }, // Espaço entre os botões
             ]}
             onPress={handlePurchaseTicket}
-            disabled={loadingPurchase || totalValue === 0}
-          >
+            disabled={loadingPurchase || totalValue === 0 || loadingStripe}>
             {loadingPurchase ? (
-              // ActivityIndicator é self-closing, não pode ter texto ou espaços dentro
               <ActivityIndicator size='small' color='#FFFFFF' />
             ) : (
-              <Text style={styles.buyButtonText}>Adquirir Ingresso(s)</Text>
+              <Text style={styles.buyButtonText}>Meus Ingressos</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* BOTÃO 2: Nova lógica de pagamento com Stripe */}
+          <TouchableOpacity
+            style={[
+              styles.buyButton,
+              styles.stripeButton, // Cor diferente para diferenciar
+              (loadingStripe || totalValue === 0) && styles.disabledButton,
+            ]}
+            onPress={handleStripePayment}
+            disabled={loadingStripe || totalValue === 0 || loadingPurchase}>
+            {loadingStripe ? (
+              <ActivityIndicator size='small' color='#FFFFFF' />
+            ) : (
+              <Text style={styles.buyButtonText}>Ir para Pagamento (Stripe)</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -253,8 +303,9 @@ export default function EventDescriptionLogado() {
   );
 }
 
-// Estilos
+// 5. ESTILOS ATUALIZADOS PARA O NOVO BOTÃO
 const styles = StyleSheet.create({
+  // ... todos os seus estilos anteriores ...
   container: {
     flex: 1,
     backgroundColor: '#f4f4f8',
@@ -273,10 +324,10 @@ const styles = StyleSheet.create({
   safeAreaForHeader: {
     backgroundColor: 'transparent',
     paddingBottom: 10,
-    paddingTop: 30, // Ajuste este valor se o header estiver muito colado ao topo da tela
+    paddingTop: 30,
   },
   scrollContent: {
-    paddingBottom: 150, // Ajuste este valor para garantir que o footer não esconda o conteúdo
+    paddingBottom: 220, // Aumentado para dar espaço para os dois botões
   },
   eventImage: {
     borderRadius: 20,
@@ -286,18 +337,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 10,
   },
-  gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 360 - 150, // Ajuste conforme a altura da imagem e o efeito desejado
-    height: 150,
-    zIndex: 1,
-  },
   contentContainer: {
     padding: 20,
     backgroundColor: '#f4f4f8',
-    marginTop: -70, // Ajuste conforme a sobreposição desejada do gradiente
+    marginTop: -70,
     zIndex: 2,
   },
   eventName: {
@@ -391,10 +434,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ddd',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 10,
@@ -417,12 +457,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buyButton: {
-    backgroundColor: '#667eea',
+    backgroundColor: '#818cf8', // Cor ajustada para o primeiro botão
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 50,
+  },
+  stripeButton: {
+    backgroundColor: '#667eea', // Cor original, mais forte, para o botão principal
   },
   buyButtonText: {
     color: '#fff',
@@ -431,5 +474,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: '#a5b4fc',
+    opacity: 0.7,
   },
 });
