@@ -10,12 +10,13 @@ export default function CustomHeader() {
   const router = useRouter();
 
   const redirectToHome = () => {
-    router.replace('/(associado)');
+    router.replace('/(admin)');
   };
 
   return (
     // O headerContainer agora não é mais absoluto no contexto da tela,
     // ele fará parte do fluxo do ScrollView em index.tsx.
+    
     <View style={styles.headerContainer}>
       {/* Top Bar / Header */}
       <LinearGradient
@@ -28,7 +29,9 @@ export default function CustomHeader() {
           <TouchableOpacity onPress={redirectToHome} style={styles.loginButton}>
             <ThemedText style={styles.loginButtonText}>Visualizar Eventos</ThemedText>
           </TouchableOpacity>
-        </View>
+          
+        </View>    
+        
       </LinearGradient>
 
       {/* Logo central */}
@@ -37,6 +40,7 @@ export default function CustomHeader() {
         style={styles.centerLogo}
       />
     </View>
+    
   );
 }
 

@@ -5,9 +5,18 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
+
+
+// 1. Defina a interface (ou Type) para as propriedades (Props)
+interface CustomHeaderInProps {
+    // onTress é uma função que não retorna nada (void) e não recebe argumentos.
+    // O '?' significa que a prop é opcional.
+    onPress?: () => void; 
+}
+
 const { width } = Dimensions.get('window');
 
-export default function CustomHeader() {
+export default function CustomHeader({ onPress }: CustomHeaderInProps) {
   const router = useRouter();
   const { user } = useAuthStore();
 
@@ -32,7 +41,7 @@ export default function CustomHeader() {
         end={{ x: 1, y: 0 }}
         style={styles.topBar}
       >
-        (isUserLoggedIn ? ()
+        (isUserLoggedIn) ? ()
         <TouchableOpacity onPress={handleIngresso} style={styles.ingressoButton}>
           <ThemedText style={styles.ingressoButtonText}>Meus Ingressos</ThemedText>
         </TouchableOpacity>
