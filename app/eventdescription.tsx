@@ -190,7 +190,7 @@ export default function EventDescriptionLogado() {
                   <View style={styles.ticketDetails}>
                     <Text style={styles.ticketTypeName}>{type.name}</Text>
                     <Text style={styles.ticketTypePrice}>
-                      R$ {type.price.toFixed(2).replace('.', ',')}
+                      R$ {Number(type.price).toFixed(2).replace('.', ',')}
                     </Text>
                   </View>
                   <View style={styles.quantitySelector}>
