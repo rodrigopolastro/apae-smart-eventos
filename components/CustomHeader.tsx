@@ -4,13 +4,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  ColorValue,
-  Dimensions,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ColorValue,
+    Dimensions,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -39,7 +39,7 @@ export default function CustomHeader({ isLoginScreen }: CustomHeaderProps) {
     buttonBackgroundColor = '#5DADE2';
     buttonShadowColor = '#007AFF';
     buttonBorderColor = '#007AFF';
-  } else if (user && user.email === "admin@apae.com") {
+  } else if (user && (user.type === 'admin' || user.email === "admin@apae.com")) {
     // Cores para ADMIN (AMARELO MAIS ESCURO)
     gradientColors = ['#FFC107', '#FFA000']; // Amarelo padrão e laranja-âmbar (Material Design)
     logoBorderColor = '#FFA000';
