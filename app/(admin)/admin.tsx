@@ -6,18 +6,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Button,
-  Image,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Button,
+    Image,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import api from '../../api'; // Importe a instância do Axios configurada
 
@@ -372,6 +372,12 @@ export default function AdminScreen() {
     });
   };
 
+  const openChatbotPage = () => {
+    router.push({
+        pathname: '../chatbot'
+    });
+  }
+
   async function handleOpenCamera() {
     try {
       const { granted } = await requestPermission();
@@ -450,6 +456,17 @@ export default function AdminScreen() {
               >
                 <Ionicons name='scan' size={24} color='white' />
                 <ThemedText style={styles.qrCodeButtonText}>Ler QR Code</ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={openChatbotPage} style={styles.qrCodeButton}>
+              <LinearGradient
+                colors={['#0a0850ff', '#402ca5ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.qrCodeButtonGradient}
+              >
+                <Ionicons name='chatbox' size={24} color='white' />
+                <ThemedText style={styles.qrCodeButtonText}>ChatBot Analítico</ThemedText>
               </LinearGradient>
             </TouchableOpacity>
 
