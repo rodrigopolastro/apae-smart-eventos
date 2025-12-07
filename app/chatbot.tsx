@@ -1,163 +1,223 @@
-// Updated React Native TypeScript code with dropdown suggestions
 import { ThemedText } from '@/components/ThemedText';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+    Alert,
     FlatList,
     KeyboardAvoidingView,
     ListRenderItemInfo,
     Platform,
     SafeAreaView,
-    ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    ToastAndroid,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
+import api from '../api';
 import CustomHeader from '../components/CustomHeader';
 
 interface ChatMessage {
   id: string;
   from: 'user' | 'bot' | 'bot-ui';
   text?: string;
-  type?: 'suggestions';
 }
 
 export default function AdminScreen(): any {
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: '1', from: 'bot', text: 'Olá! Como posso ajudar com os insights dos eventos?' },
   ]);
 
   const [input, setInput] = useState<string>('');
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-
-  const suggestions: string[] = [
-    'Qual foi o evento que mais arrecadou?',
-    'Quantas pessoas compareceram no último evento?',
-    'Mostre o ranking de vendas por tipo de ingresso.',
-  ];
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const flatListRef = useRef<FlatList<ChatMessage> | null>(null);
 
-  const sendMessage = (): void => {
-    if (!input.trim()) return;
+  /* ---------------------- FETCH SUGGESTIONS ON MOUNT ---------------------- */
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        const res = await api.get('/chatbot/getQuestionSuggestions');
 
-    setShowSuggestions(false); // fecha dropdown ao enviar
+        const { suggestion1, suggestion2, suggestion3 } = res.data;
+        console.log(JSON.stringify(res))
 
-    const userMessage: ChatMessage = { id: Date.now().toString(), from: 'user', text: input };
-    setMessages(prev => [...prev, userMessage]);
-
-    const botReply: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      from: 'bot',
-      text: 'O evento que mais arrecadou fundos foi a "Festa Junina", tendo arrecadado, até o momento, R$1975,00' +
-      ' com os 35 ingressos vendidos.'
+        setSuggestions([suggestion1, suggestion2, suggestion3]);
+      } catch (err) {
+        if (Platform.OS === 'android')
+          ToastAndroid.show("Erro ao carregar sugestões", ToastAndroid.SHORT);
+        else
+          Alert.alert("Erro", "Erro ao carregar sugestões");
+      }
     };
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, botReply]);
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
-    }, 500);
+    fetchSuggestions();
+  }, []);
 
+  /* ---------------------- SEND QUESTION + BOT RESPONSE ---------------------- */
+  const sendMessage = async (): Promise<void> => {
+    if (!input.trim()) return;
+
+    setShowSuggestions(false);
+
+    const question = input.trim();
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      from: 'user',
+      text: question
+    };
+
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
+
+    // Add temporary "typing" message
+    const typingId = (Date.now() + 1).toString();
+    const typingMessage: ChatMessage = {
+      id: typingId,
+      from: 'bot-ui',
+      text: 'Digitando...'
+    };
+    setMessages(prev => [...prev, typingMessage]);
+
+    try {
+      const res = await api.post('/chatbot/askQuestion', { question });
+
+      const botAnswer = res.data.answer;
+
+      // Remove typing message & add real bot answer
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== typingId),
+        { id: (Date.now() + 2).toString(), from: 'bot', text: botAnswer }
+      ]);
+
+    } catch (error) {
+      // Remove typing message
+      setMessages(prev => prev.filter(m => m.id !== typingId));
+
+      if (Platform.OS === 'android')
+        ToastAndroid.show("Erro ao enviar pergunta", ToastAndroid.SHORT);
+      else
+        Alert.alert("Erro", "Erro ao enviar pergunta");
+    }
+
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
   };
 
+  /* ---------------------- SUGGESTION CLICK ---------------------- */
   const handleSuggestion = (text: string): void => {
     setInput(text);
     setShowSuggestions(false);
   };
 
+  /* ---------------------- RENDER MESSAGE BUBBLES ---------------------- */
   const renderMessage = ({ item }: ListRenderItemInfo<ChatMessage>) => {
-    if (item.type === 'suggestions') return null; // não renderiza aqui mais
-
     const isUser = item.from === 'user';
+    const isTyping = item.from === 'bot-ui';
+
     return (
-      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.botBubble]}>
+      <View
+        style={[
+          styles.messageBubble,
+          isUser ? styles.userBubble : styles.botBubble,
+          isTyping && { opacity: 0.6 }
+        ]}
+      >
         <Text style={styles.messageText}>{item.text}</Text>
       </View>
     );
   };
 
+  /* ---------------------- UI ---------------------- */
   return (
-    // <View style={styles.mainContainer}>
-      <KeyboardAvoidingView
+    <KeyboardAvoidingView
         style={styles.mainContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 10}
-      >
+    >
         <SafeAreaView style={styles.safeArea}>
-          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+
+            {/* Header */}
             <CustomHeader />
 
+            {/* Title */}
             <View style={styles.titleContainer}>
-              <ThemedText style={styles.title}>Chat de Insights dos Eventos</ThemedText>
+            <ThemedText style={styles.title}>Chat de Insights dos Eventos</ThemedText>
             </View>
 
-            <View style={styles.chatContainer}>
-              <FlatList
-                ref={flatListRef}
-                data={messages}
-                renderItem={renderMessage}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.messageList}
-                keyboardShouldPersistTaps="handled"
-              />
-            </View>
-          </ScrollView>
+            {/* CHAT LIST – this must be the ONLY scrollable container */}
+            <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messageList}
+            style={styles.chatList}
+            keyboardShouldPersistTaps="handled"
+            />
 
-          {/* Dropdown de Sugestões */}
-          <View style={styles.dropdownContainer}>
+            {/* Suggestions */}
+            <View style={styles.dropdownContainer}>
             <TouchableOpacity
-              style={styles.dropdownToggle}
-              onPress={() => setShowSuggestions(prev => !prev)}
+                style={styles.dropdownToggle}
+                onPress={() => setShowSuggestions(prev => !prev)}
             >
-              <Text style={styles.dropdownToggleText}>Sugestões {showSuggestions ? '▼' : '▲'}</Text>
+                <Text style={styles.dropdownToggleText}>
+                Sugestões {showSuggestions ? '▼' : '▲'}
+                </Text>
             </TouchableOpacity>
 
             {showSuggestions && (
-              <View style={styles.suggestionDropdown}>
+                <View style={styles.suggestionDropdown}>
                 {suggestions.map((s, idx) => (
-                  <TouchableOpacity key={idx} onPress={() => handleSuggestion(s)} style={styles.suggestionButton}>
+                    <TouchableOpacity
+                    key={idx}
+                    onPress={() => handleSuggestion(s)}
+                    style={styles.suggestionButton}
+                    >
                     <Text style={styles.suggestionText}>{s}</Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
                 ))}
-              </View>
+                </View>
             )}
-          </View>
+            </View>
 
-          {/* Caixa de entrada */}
-          <View style={styles.inputContainer}>
+            {/* Input */}
+            <View style={styles.inputContainer}>
             <TextInput
-              value={input}
-              onChangeText={setInput}
-              placeholder="Digite sua pergunta..."
-              style={styles.input}
-              returnKeyType="send"
-              onSubmitEditing={sendMessage}
+                value={input}
+                onChangeText={setInput}
+                placeholder="Digite sua pergunta..."
+                style={styles.input}
+                returnKeyType="send"
+                onSubmitEditing={sendMessage}
             />
             <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-              <Text style={styles.sendButtonText}>Enviar</Text>
+                <Text style={styles.sendButtonText}>Enviar</Text>
             </TouchableOpacity>
-          </View>
+            </View>
         </SafeAreaView>
-      </KeyboardAvoidingView>
-    // </View>
+    </KeyboardAvoidingView>
   );
 }
+
+/* ---------------------- STYLES ---------------------- */
 
 const styles = StyleSheet.create({
   mainContainer: { flex: 1, backgroundColor: '#fff' },
   safeArea: { flex: 1 },
   scrollContent: { paddingBottom: 20, paddingTop: 20 },
-  titleContainer: { paddingHorizontal: 20, marginBottom: 10},
+  titleContainer: { paddingHorizontal: 20, marginBottom: 10 },
   title: { fontSize: 20, fontWeight: 'bold', color: 'black', width: '100%', textAlign: 'center' },
-  chatContainer: {
+  chatContainer: { paddingHorizontal: 20, marginBottom: 10, height: 350 },
+  messageList: { paddingBottom: 20 },
+  chatList: {
+    flex: 1,
     paddingHorizontal: 20,
     marginBottom: 10,
-    height: 350,
   },
-  messageList: { paddingBottom: 20 },
   messageBubble: {
     padding: 12,
     marginBottom: 10,
@@ -174,20 +234,13 @@ const styles = StyleSheet.create({
   },
   messageText: { fontSize: 14, color: '#333' },
 
-  /* Dropdown */
   dropdownContainer: {
     paddingHorizontal: 20,
     backgroundColor: '#fff',
     paddingBottom: 5,
   },
-  dropdownToggle: {
-    paddingVertical: 8,
-  },
-  dropdownToggleText: {
-    color: '#1E40AF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  dropdownToggle: { paddingVertical: 8 },
+  dropdownToggleText: { color: '#1E40AF', fontWeight: 'bold', fontSize: 16 },
   suggestionDropdown: {
     marginTop: 5,
     borderWidth: 1,
@@ -206,7 +259,6 @@ const styles = StyleSheet.create({
   },
   suggestionText: { color: '#1E3A8A' },
 
-  /* Input */
   inputContainer: {
     flexDirection: 'row',
     padding: 12,
