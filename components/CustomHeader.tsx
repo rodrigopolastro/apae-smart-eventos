@@ -107,7 +107,7 @@ export default function CustomHeader({ isLoginScreen }: CustomHeaderProps) {
             <View style={styles.loggedInInfoContainer}>
               <Text style={styles.userNameText}>Olá, {user.name || 'Usuário'}!</Text>
               <Text style={styles.userTypeText}>
-                {user.email === 'admin@apae.com' ? 'Administrador' : 'Associado'}
+                {user.email === 'admin@apae.com' ? 'Administrador' : 'Amigo'}
               </Text>
             </View>
           ) : null // Não mostra nada se não for tela de login e não houver usuário logado
