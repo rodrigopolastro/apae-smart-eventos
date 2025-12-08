@@ -39,13 +39,14 @@ export default function AdminScreen(): any {
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
+        setSuggestions(['Carregando...'])
         const res = await api.get('/chatbot/getQuestionSuggestions');
 
         const { suggestion1, suggestion2, suggestion3 } = res.data;
-        console.log(JSON.stringify(res))
 
         setSuggestions([suggestion1, suggestion2, suggestion3]);
       } catch (err) {
+        console.error(err)
         if (Platform.OS === 'android')
           ToastAndroid.show("Erro ao carregar sugestões", ToastAndroid.SHORT);
         else
@@ -97,6 +98,7 @@ export default function AdminScreen(): any {
       // Remove typing message
       setMessages(prev => prev.filter(m => m.id !== typingId));
 
+      console.error(error)
       if (Platform.OS === 'android')
         ToastAndroid.show("Erro ao enviar pergunta", ToastAndroid.SHORT);
       else
@@ -186,17 +188,17 @@ export default function AdminScreen(): any {
 
             {/* Input */}
             <View style={styles.inputContainer}>
-            <TextInput
-                value={input}
-                onChangeText={setInput}
-                placeholder="Digite sua pergunta..."
-                style={styles.input}
-                returnKeyType="send"
-                onSubmitEditing={sendMessage}
-            />
-            <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                <Text style={styles.sendButtonText}>Enviar</Text>
-            </TouchableOpacity>
+                <TextInput
+                    value={input}
+                    onChangeText={setInput}
+                    placeholder="Digite sua pergunta..."
+                    style={styles.input}
+                    returnKeyType="send"
+                    onSubmitEditing={sendMessage}
+                />
+                <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+                    <Text style={styles.sendButtonText}>Enviar</Text>
+                </TouchableOpacity>
             </View>
         </SafeAreaView>
     </KeyboardAvoidingView>
